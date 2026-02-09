@@ -1,7 +1,15 @@
-name: ArtixDuels
+name: ArtixDuelsRemake
 version: '${project.version}'
 description: 'ArtixDuels'
 authors: [ 'Faastyzin' ]
 website: 'https://store.artixdevelopment.com'
 main: dev.artix.artixduels.ArtixDuels
 api-version: 1.13
+
+permissions:
+  artixduels.theme.use:
+    description: Permite usar o sistema de temas
+    default: false
+  artixduels.theme.customize:
+    description: Permite customizar temas
+    default: false

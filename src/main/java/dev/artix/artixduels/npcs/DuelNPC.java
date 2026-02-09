@@ -73,7 +73,10 @@ public class DuelNPC {
                 continue;
             }
 
-            String displayName = ChatColor.translateAlternateColorCodes('&', npcSection.getString("display-name", npcName));
+            String displayNameRaw = npcSection.getString("display-name", npcName);
+            // Processar placeholder <theme> no display-name
+            String displayName = processThemePlaceholder(displayNameRaw);
+            displayName = ChatColor.translateAlternateColorCodes('&', displayName);
             String skinName = npcSection.getString("skin", "");
             Location location = parseLocation(npcSection.getString("location", ""));
 
@@ -248,6 +251,21 @@ public class DuelNPC {
 
     public DuelMode getNPCMode(String npcName) {
         return npcModes.get(npcName);
+    }
+
+    private String processThemePlaceholder(String text) {
+        if (text == null) return text;
+        try {
+            dev.artix.artixduels.managers.ThemeManager themeManager = plugin.getThemeManager();
+            if (themeManager != null) {
+                // Usar tema padrão (dark) para NPCs globais
+                String themeColor = themeManager.getTheme("dark").getColor("primary");
+                return text.replace("<theme>", themeColor);
+            }
+        } catch (Exception e) {
+            // Ignorar erros
+        }
+        return text.replace("<theme>", "&b");
     }
 
     private Location parseLocation(String locString) {

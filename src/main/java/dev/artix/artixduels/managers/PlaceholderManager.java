@@ -200,6 +200,22 @@ public class PlaceholderManager {
             processed = processed.replace("{" + entry.getKey() + "}", entry.getValue());
         }
         
+        // Processar placeholder <theme> - cor primária do tema do jogador
+        if (player != null && plugin != null) {
+            try {
+                dev.artix.artixduels.managers.ThemeManager themeManager = plugin.getThemeManager();
+                if (themeManager != null) {
+                    String themeColor = themeManager.getColor(player.getUniqueId(), "primary");
+                    processed = processed.replace("<theme>", themeColor);
+                }
+            } catch (Exception e) {
+                // Ignorar erros
+            }
+        } else {
+            // Se não houver jogador, usar cor padrão
+            processed = processed.replace("<theme>", "&f");
+        }
+        
         // Processar placeholders do PlaceholderAPI se disponível
         if (plugin != null && player != null) {
             try {

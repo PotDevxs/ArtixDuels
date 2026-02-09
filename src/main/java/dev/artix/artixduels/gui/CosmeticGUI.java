@@ -96,7 +96,7 @@ public class CosmeticGUI implements Listener {
 
             boolean unlocked = playerCosmetics.hasCosmeticUnlocked(cosmetic.getId());
             boolean active = cosmetic.getId().equals(activeCosmeticId);
-            ItemStack cosmeticItem = createCosmeticItem(cosmetic, unlocked, active);
+            ItemStack cosmeticItem = createCosmeticItem(cosmetic, unlocked, active, player);
             gui.setItem(slot, cosmeticItem);
             slot++;
         }
@@ -225,6 +225,10 @@ public class CosmeticGUI implements Listener {
     }
 
     private ItemStack createCosmeticItem(Cosmetic cosmetic, boolean unlocked, boolean active) {
+        return createCosmeticItem(cosmetic, unlocked, active, null);
+    }
+
+    private ItemStack createCosmeticItem(Cosmetic cosmetic, boolean unlocked, boolean active, Player player) {
         ItemStack item = new ItemStack(cosmetic.getDisplayMaterial(), 1, (short) cosmetic.getDisplayData());
         ItemMeta meta = item.getItemMeta();
         
@@ -232,12 +236,29 @@ public class CosmeticGUI implements Listener {
         String statusPrefix = active ? "&a&l[ATIVO] " : "";
         String unlockPrefix = unlocked ? "" : "&c&l[BLOQUEADO] ";
         
+        String cosmeticName = cosmetic.getName();
+        String cosmeticDescription = cosmetic.getDescription();
+        
+        // Processar placeholder <theme> se houver jogador
+        if (player != null) {
+            try {
+                dev.artix.artixduels.managers.ThemeManager themeManager = 
+                    ((dev.artix.artixduels.ArtixDuels) org.bukkit.Bukkit.getPluginManager().getPlugin("ArtixDuels")).getThemeManager();
+                if (themeManager != null) {
+                    cosmeticName = themeManager.processThemePlaceholder(cosmeticName, player.getUniqueId());
+                    cosmeticDescription = themeManager.processThemePlaceholder(cosmeticDescription, player.getUniqueId());
+                }
+            } catch (Exception e) {
+                // Ignorar erros
+            }
+        }
+        
         meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', 
-            statusPrefix + unlockPrefix + rarityColor + cosmetic.getName()));
+            statusPrefix + unlockPrefix + rarityColor + cosmeticName));
 
         List<String> lore = new ArrayList<>();
         lore.add("&8&m                              ");
-        lore.add("&7" + cosmetic.getDescription());
+        lore.add("&7" + cosmeticDescription);
         lore.add("&8&m                              ");
         lore.add("&7Raridade: " + rarityColor + cosmetic.getRarity().getName().toUpperCase());
         lore.add("&8&m                              ");

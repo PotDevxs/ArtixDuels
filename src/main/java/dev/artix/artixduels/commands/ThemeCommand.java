@@ -34,6 +34,12 @@ public class ThemeCommand implements CommandExecutor {
 
         Player player = (Player) sender;
 
+        // Verificar permissão
+        if (!player.hasPermission("artixduels.theme.use")) {
+            player.sendMessage("§cVocê não tem permissão para usar temas!");
+            return true;
+        }
+
         if (args.length == 0) {
             themeGUI.openThemeMenu(player);
             return true;
@@ -69,6 +75,10 @@ public class ThemeCommand implements CommandExecutor {
                 break;
 
             case "customize":
+                if (!player.hasPermission("artixduels.theme.customize")) {
+                    player.sendMessage("§cVocê não tem permissão para customizar temas!");
+                    return true;
+                }
                 if (args.length < 2) {
                     themeGUI.openCustomizeMenu(player);
                     return true;

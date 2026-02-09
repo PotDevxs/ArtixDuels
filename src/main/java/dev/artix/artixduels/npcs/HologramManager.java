@@ -106,6 +106,20 @@ public class HologramManager {
     private String processPlaceholders(String line, DuelMode mode) {
         String processed = ChatColor.translateAlternateColorCodes('&', line);
         
+        // Processar placeholder <theme> - usar tema padrão já que não há jogador específico
+        try {
+            dev.artix.artixduels.managers.ThemeManager themeManager = plugin.getThemeManager();
+            if (themeManager != null) {
+                // Usar tema padrão (dark) para hologramas globais
+                String themeColor = themeManager.getTheme("dark").getColor("primary");
+                processed = processed.replace("<theme>", themeColor);
+            } else {
+                processed = processed.replace("<theme>", "&b");
+            }
+        } catch (Exception e) {
+            processed = processed.replace("<theme>", "&b");
+        }
+        
         if (placeholderManager != null) {
             processed = placeholderManager.processPlaceholders(processed, null, mode);
         } else {

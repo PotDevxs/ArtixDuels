@@ -29,6 +29,10 @@ public class Duel {
     private int player2Combo;
     private boolean player1BedAlive;
     private boolean player2BedAlive;
+    private int player1Sopas;
+    private int player2Sopas;
+    private int player1Streak;
+    private int player2Streak;
 
     public enum DuelState {
         COUNTDOWN,
@@ -59,6 +63,10 @@ public class Duel {
         this.player2Hits = 0;
         this.player1Combo = 0;
         this.player2Combo = 0;
+        this.player1Sopas = 0;
+        this.player2Sopas = 0;
+        this.player1Streak = 0;
+        this.player2Streak = 0;
         
         switch (mode) {
             case BEDFIGHT:
@@ -351,6 +359,83 @@ public class Duel {
             return player2BedAlive;
         }
         return false;
+    }
+    
+    // Getters e Setters para sopas
+    public int getPlayer1Sopas() {
+        return player1Sopas;
+    }
+    
+    public void setPlayer1Sopas(int player1Sopas) {
+        this.player1Sopas = player1Sopas;
+    }
+    
+    public void addPlayer1Sopa() {
+        this.player1Sopas++;
+    }
+    
+    public int getPlayer2Sopas() {
+        return player2Sopas;
+    }
+    
+    public void setPlayer2Sopas(int player2Sopas) {
+        this.player2Sopas = player2Sopas;
+    }
+    
+    public void addPlayer2Sopa() {
+        this.player2Sopas++;
+    }
+    
+    // Getters e Setters para streaks
+    public int getPlayer1Streak() {
+        return player1Streak;
+    }
+    
+    public void setPlayer1Streak(int player1Streak) {
+        this.player1Streak = player1Streak;
+    }
+    
+    public void addPlayer1Streak() {
+        this.player1Streak++;
+    }
+    
+    public void resetPlayer1Streak() {
+        this.player1Streak = 0;
+    }
+    
+    public int getPlayer2Streak() {
+        return player2Streak;
+    }
+    
+    public void setPlayer2Streak(int player2Streak) {
+        this.player2Streak = player2Streak;
+    }
+    
+    public void addPlayer2Streak() {
+        this.player2Streak++;
+    }
+    
+    public void resetPlayer2Streak() {
+        this.player2Streak = 0;
+    }
+    
+    // Métodos auxiliares para obter estatísticas por jogador
+    public int getSopas(UUID playerId) {
+        if (player1Id.equals(playerId)) {
+            return player1Sopas;
+        } else if (player2Id.equals(playerId)) {
+            return player2Sopas;
+        }
+        return 0;
+    }
+    
+    public int getStreak(UUID playerId) {
+        if (player1Id.equals(playerId)) {
+            return player1Streak;
+        } else if (player2Id.equals(playerId)) {
+            return player2Streak;
+        }
+        return 0;
     }
 }
 

@@ -9,9 +9,12 @@ import java.util.UUID;
 public class Season {
     private String id;
     private String name;
+    private int seasonNumber;
     private long startTime;
     private long endTime;
     private boolean active;
+    private UUID topPlayerId;
+    private String topPlayerName;
     private Map<UUID, Integer> seasonElo;
     private Map<UUID, Integer> seasonWins;
     private Map<String, Object> rewards;
@@ -19,13 +22,19 @@ public class Season {
     public Season(String id, String name, long startTime, long endTime) {
         this.id = id;
         this.name = name;
+        this.seasonNumber = 1;
         this.startTime = startTime;
         this.endTime = endTime;
         this.active = false;
     }
 
     public Season(int seasonNumber, long startTime2, long endTime2) {
-        //TODO Auto-generated constructor stub
+        this.seasonNumber = seasonNumber;
+        this.id = "season_" + seasonNumber;
+        this.name = "Temporada " + seasonNumber;
+        this.startTime = startTime2;
+        this.endTime = endTime2;
+        this.active = true;
     }
 
     public String getId() {
@@ -96,28 +105,23 @@ public class Season {
         return System.currentTimeMillis() > endTime;
     }
 
-    public void setTopPlayerId(UUID fromString) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setTopPlayerId'");
+    public void setTopPlayerId(UUID topPlayerId) {
+        this.topPlayerId = topPlayerId;
     }
 
-    public void setTopPlayerName(String string) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'setTopPlayerName'");
+    public void setTopPlayerName(String topPlayerName) {
+        this.topPlayerName = topPlayerName;
     }
 
     public int getSeasonNumber() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getSeasonNumber'");
+        return seasonNumber;
     }
 
-    public Object getTopPlayerId() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getTopPlayerId'");
+    public UUID getTopPlayerId() {
+        return topPlayerId;
     }
 
-    public Object getTopPlayerName() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getTopPlayerName'");
+    public String getTopPlayerName() {
+        return topPlayerName;
     }
 }

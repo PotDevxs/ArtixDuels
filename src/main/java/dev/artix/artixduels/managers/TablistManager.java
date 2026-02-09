@@ -107,6 +107,21 @@ public class TablistManager {
         List<String> processed = new java.util.ArrayList<>();
         for (String line : lines) {
             String processedLine = ChatColor.translateAlternateColorCodes('&', line);
+            
+            // Processar placeholder <theme> - cor primária do tema do jogador
+            try {
+                dev.artix.artixduels.managers.ThemeManager themeManager = 
+                    ((dev.artix.artixduels.ArtixDuels) org.bukkit.Bukkit.getPluginManager().getPlugin("ArtixDuels")).getThemeManager();
+                if (themeManager != null) {
+                    String themeColor = themeManager.getColor(player.getUniqueId(), "primary");
+                    processedLine = processedLine.replace("<theme>", themeColor);
+                } else {
+                    processedLine = processedLine.replace("<theme>", "&f");
+                }
+            } catch (Exception e) {
+                processedLine = processedLine.replace("<theme>", "&f");
+            }
+            
             processedLine = processedLine.replace("{player}", player.getName());
             processedLine = processedLine.replace("{online}", String.valueOf(Bukkit.getOnlinePlayers().size()));
             processedLine = processedLine.replace("{max}", String.valueOf(Bukkit.getMaxPlayers()));
@@ -150,6 +165,21 @@ public class TablistManager {
 
     private String processPlayerNameFormat(Player player) {
         String formatted = ChatColor.translateAlternateColorCodes('&', playerNameFormat);
+        
+        // Processar placeholder <theme> - cor primária do tema do jogador
+        try {
+            dev.artix.artixduels.managers.ThemeManager themeManager = 
+                ((dev.artix.artixduels.ArtixDuels) org.bukkit.Bukkit.getPluginManager().getPlugin("ArtixDuels")).getThemeManager();
+            if (themeManager != null) {
+                String themeColor = themeManager.getColor(player.getUniqueId(), "primary");
+                formatted = formatted.replace("<theme>", themeColor);
+            } else {
+                formatted = formatted.replace("<theme>", "&f");
+            }
+        } catch (Exception e) {
+            formatted = formatted.replace("<theme>", "&f");
+        }
+        
         formatted = formatted.replace("{player}", player.getName());
         formatted = formatted.replace("{ping}", String.valueOf(getPing(player)));
         

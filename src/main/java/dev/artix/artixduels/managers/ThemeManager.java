@@ -101,6 +101,110 @@ public class ThemeManager {
         halloween.setSeasonal(true);
         halloween.setSeason("autumn");
         themes.put("halloween", halloween);
+
+        // Tema AQUA
+        Theme aqua = new Theme("aqua", "Aqua", "Tema com cor aqua/ciano");
+        aqua.setColor("primary", "&b");
+        aqua.setColor("secondary", "&3");
+        aqua.setColor("success", "&a");
+        aqua.setColor("danger", "&c");
+        aqua.setColor("warning", "&e");
+        aqua.setColor("info", "&b");
+        aqua.setColor("title", "&b&l");
+        aqua.setColor("text", "&f");
+        aqua.setColor("border", "&3");
+        themes.put("aqua", aqua);
+
+        // Tema GOLD
+        Theme gold = new Theme("gold", "Gold", "Tema com cor dourada");
+        gold.setColor("primary", "&6");
+        gold.setColor("secondary", "&e");
+        gold.setColor("success", "&a");
+        gold.setColor("danger", "&c");
+        gold.setColor("warning", "&e");
+        gold.setColor("info", "&6");
+        gold.setColor("title", "&6&l");
+        gold.setColor("text", "&f");
+        gold.setColor("border", "&e");
+        themes.put("gold", gold);
+
+        // Tema YELLOW
+        Theme yellow = new Theme("yellow", "Yellow", "Tema com cor amarela");
+        yellow.setColor("primary", "&e");
+        yellow.setColor("secondary", "&6");
+        yellow.setColor("success", "&a");
+        yellow.setColor("danger", "&c");
+        yellow.setColor("warning", "&e");
+        yellow.setColor("info", "&e");
+        yellow.setColor("title", "&e&l");
+        yellow.setColor("text", "&f");
+        yellow.setColor("border", "&6");
+        themes.put("yellow", yellow);
+
+        // Tema RED
+        Theme red = new Theme("red", "Red", "Tema com cor vermelha");
+        red.setColor("primary", "&c");
+        red.setColor("secondary", "&4");
+        red.setColor("success", "&a");
+        red.setColor("danger", "&c");
+        red.setColor("warning", "&e");
+        red.setColor("info", "&c");
+        red.setColor("title", "&c&l");
+        red.setColor("text", "&f");
+        red.setColor("border", "&4");
+        themes.put("red", red);
+
+        // Tema GREEN
+        Theme green = new Theme("green", "Green", "Tema com cor verde");
+        green.setColor("primary", "&a");
+        green.setColor("secondary", "&2");
+        green.setColor("success", "&a");
+        green.setColor("danger", "&c");
+        green.setColor("warning", "&e");
+        green.setColor("info", "&a");
+        green.setColor("title", "&a&l");
+        green.setColor("text", "&f");
+        green.setColor("border", "&2");
+        themes.put("green", green);
+
+        // Tema BLUE
+        Theme blue = new Theme("blue", "Blue", "Tema com cor azul");
+        blue.setColor("primary", "&9");
+        blue.setColor("secondary", "&1");
+        blue.setColor("success", "&a");
+        blue.setColor("danger", "&c");
+        blue.setColor("warning", "&e");
+        blue.setColor("info", "&9");
+        blue.setColor("title", "&9&l");
+        blue.setColor("text", "&f");
+        blue.setColor("border", "&1");
+        themes.put("blue", blue);
+
+        // Tema PURPLE
+        Theme purple = new Theme("purple", "Purple", "Tema com cor roxa");
+        purple.setColor("primary", "&5");
+        purple.setColor("secondary", "&d");
+        purple.setColor("success", "&a");
+        purple.setColor("danger", "&c");
+        purple.setColor("warning", "&e");
+        purple.setColor("info", "&5");
+        purple.setColor("title", "&5&l");
+        purple.setColor("text", "&f");
+        purple.setColor("border", "&d");
+        themes.put("purple", purple);
+
+        // Tema PINK
+        Theme pink = new Theme("pink", "Pink", "Tema com cor rosa");
+        pink.setColor("primary", "&d");
+        pink.setColor("secondary", "&5");
+        pink.setColor("success", "&a");
+        pink.setColor("danger", "&c");
+        pink.setColor("warning", "&e");
+        pink.setColor("info", "&d");
+        pink.setColor("title", "&d&l");
+        pink.setColor("text", "&f");
+        pink.setColor("border", "&5");
+        themes.put("pink", pink);
     }
 
     /**
@@ -165,6 +269,15 @@ public class ThemeManager {
     public String getColor(UUID playerId, String colorKey) {
         Theme theme = getTheme(playerId);
         return theme != null ? theme.getColor(colorKey) : "&f";
+    }
+
+    /**
+     * Processa o placeholder <theme> em uma string, substituindo pela cor primária do tema do jogador.
+     */
+    public String processThemePlaceholder(String text, UUID playerId) {
+        if (text == null) return null;
+        String themeColor = getColor(playerId, "primary");
+        return text.replace("<theme>", themeColor);
     }
 
     /**

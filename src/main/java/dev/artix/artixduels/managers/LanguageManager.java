@@ -211,6 +211,19 @@ public class LanguageManager {
             message = message.replace("{" + entry.getKey() + "}", entry.getValue());
         }
         
+        // Processar placeholder <theme> - cor primária do tema do jogador
+        try {
+            dev.artix.artixduels.managers.ThemeManager themeManager = plugin.getThemeManager();
+            if (themeManager != null) {
+                String themeColor = themeManager.getColor(playerId, "primary");
+                message = message.replace("<theme>", themeColor);
+            } else {
+                message = message.replace("<theme>", "&f");
+            }
+        } catch (Exception e) {
+            message = message.replace("<theme>", "&f");
+        }
+        
         // Aplicar códigos de cor
         message = ChatColor.translateAlternateColorCodes('&', message);
         
@@ -250,6 +263,19 @@ public class LanguageManager {
         
         for (Map.Entry<String, String> entry : placeholders.entrySet()) {
             message = message.replace("{" + entry.getKey() + "}", entry.getValue());
+        }
+        
+        // Processar placeholder <theme> - cor primária do tema do jogador
+        try {
+            dev.artix.artixduels.managers.ThemeManager themeManager = plugin.getThemeManager();
+            if (themeManager != null) {
+                String themeColor = themeManager.getColor(playerId, "primary");
+                message = message.replace("<theme>", themeColor);
+            } else {
+                message = message.replace("<theme>", "&f");
+            }
+        } catch (Exception e) {
+            message = message.replace("<theme>", "&f");
         }
         
         message = ChatColor.translateAlternateColorCodes('&', message);

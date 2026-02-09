@@ -22,7 +22,7 @@ npcs:
       offset-x: 0.0
       offset-z: 0.0
       lines:
-        - "&b&lBEDFIGHT"
+        - "<theme>&lBEDFIGHT"
         - "&e{players-in-duel} jogando"
   
   stickfight:
@@ -42,7 +42,7 @@ npcs:
       offset-x: 0.0
       offset-z: 0.0
       lines:
-        - "&b&lSTICKFIGHT"
+        - "<theme>&lSTICKFIGHT"
         - "&e{players-in-duel} jogando"
   
   soup:
@@ -62,7 +62,7 @@ npcs:
       offset-x: 0.0
       offset-z: 0.0
       lines:
-        - "&b&lSOUP"
+        - "<theme>&lSOUP"
         - "&e{players-in-duel} jogando"
   
   souprecraft:
@@ -82,7 +82,7 @@ npcs:
       offset-x: 0.0
       offset-z: 0.0
       lines:
-        - "&b&lSOUP-RECRAFT"
+        - "<theme>&lSOUP-RECRAFT"
         - "&e{players-in-duel} jogando"
   
   gladiator:
@@ -102,7 +102,7 @@ npcs:
       offset-x: 0.0
       offset-z: 0.0
       lines:
-        - "&b&lGLADIATOR"
+        - "<theme>&lGLADIATOR"
         - "&e{players-in-duel} jogando"
   
   fastob:
@@ -122,7 +122,7 @@ npcs:
       offset-x: 0.0
       offset-z: 0.0
       lines:
-        - "&b&lFASTOB"
+        - "<theme>&lFASTOB"
         - "&e{players-in-duel} jogando"
   
   boxing:
@@ -142,7 +142,7 @@ npcs:
       offset-x: 0.0
       offset-z: 0.0
       lines:
-        - "&b&lBOXING"
+        - "<theme>&lBOXING"
         - "&e{players-in-duel} jogando"
   
   fireballfight:
@@ -162,7 +162,7 @@ npcs:
       offset-x: 0.0
       offset-z: 0.0
       lines:
-        - "&b&lFIREBALL-FIGHT"
+        - "<theme>&lFIREBALL-FIGHT"
         - "&e{players-in-duel} jogando"
   
   sumo:
@@ -182,7 +182,7 @@ npcs:
       offset-x: 0.0
       offset-z: 0.0
       lines:
-        - "&b&lSUMO"
+        - "<theme>&lSUMO"
         - "&e{players-in-duel} jogando"
   
   battlerush:
@@ -202,7 +202,7 @@ npcs:
       offset-x: 0.0
       offset-z: 0.0
       lines:
-        - "&b&lBATTLERUSH"
+        - "<theme>&lBATTLERUSH"
         - "&e{players-in-duel} jogando"
   
   tntsumo:
@@ -222,6 +222,30 @@ npcs:
       offset-x: 0.0
       offset-z: 0.0
       lines:
-        - "&b&lTNT-SUMO"
+        - "<theme>&lTNT-SUMO"
         - "&e{players-in-duel} jogando"
+
+  sopa:
+    mode: "SOUP"
+    display-name: "&b&lSopa"
+    skin: "Soup"
+    location: "world,55,100,0,0,0"
+    look-close:
+      enabled: true
+      range: 2
+    equipment:
+      hand: MUSHROOM_SOUP
+      off-hand: null
+      helmet: null
+      chestplate: null
+      leggings: null
+      boots: null
+    hologram:
+      enabled: true
+      height: 2.5
+      offset-x: 0.0
+      offset-z: 0.0
+      lines:
+        - "<theme>&lSOPA"
+        - "&e{players-in-duel-mode} jogando"
 

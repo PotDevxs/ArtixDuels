@@ -1,5 +1,6 @@
 package dev.artix.artixduels.gui;
 
+import dev.artix.artixduels.managers.MenuManager;
 import dev.artix.artixduels.managers.ThemeManager;
 import dev.artix.artixduels.models.Theme;
 import org.bukkit.Bukkit;
@@ -22,15 +23,87 @@ import java.util.Map;
  */
 public class ThemeSelectionGUI implements Listener {
     private final ThemeManager themeManager;
+    private MenuManager menuManager;
 
     public ThemeSelectionGUI(ThemeManager themeManager) {
         this.themeManager = themeManager;
+    }
+
+    public void setMenuManager(MenuManager menuManager) {
+        this.menuManager = menuManager;
     }
 
     /**
      * Abre o menu de seleção de temas.
      */
     public void openThemeMenu(Player player) {
+        // Verificar permissão
+        if (!player.hasPermission("artixduels.theme.use")) {
+            player.sendMessage("§cVocê não tem permissão para usar temas!");
+            return;
+        }
+
+        // Usar menu do menus.yml se disponível
+        if (menuManager != null) {
+            MenuManager.MenuData menuData = menuManager.getMenu("theme-selection");
+            if (menuData != null) {
+                String title = menuData.getTitle();
+                if (title.length() > 32) {
+                    title = title.substring(0, 32);
+                }
+                Inventory gui = Bukkit.createInventory(null, menuData.getSize(), title);
+                
+                // Preencher bordas e itens do menu
+                dev.artix.artixduels.utils.MenuUtils.fillMenuBorders(gui);
+                
+                // Adicionar itens do menu configurável
+                for (MenuManager.MenuItemData itemData : menuData.getItems()) {
+                    ItemStack item = menuManager.createMenuItem("theme-selection", itemData.getName());
+                    if (item != null) {
+                        gui.setItem(itemData.getSlot(), item);
+                    }
+                }
+                
+                // Adicionar temas disponíveis
+                String currentTheme = themeManager.getPlayerTheme(player.getUniqueId());
+                Map<String, Theme> themes = themeManager.getThemes();
+                
+                int slot = 0;
+                for (Map.Entry<String, Theme> entry : themes.entrySet()) {
+                    if (slot >= 45) break;
+                    
+                    // Pular slots ocupados por itens do menu
+                    boolean slotOccupied = false;
+                    for (MenuManager.MenuItemData itemData : menuData.getItems()) {
+                        if (itemData.getSlot() == slot) {
+                            slotOccupied = true;
+                            break;
+                        }
+                    }
+                    if (slotOccupied) {
+                        slot++;
+                        continue;
+                    }
+                    
+                    Theme theme = entry.getValue();
+                    if (theme.isSeasonal()) {
+                        List<Theme> seasonal = themeManager.getSeasonalThemes();
+                        if (!seasonal.contains(theme)) {
+                            continue;
+                        }
+                    }
+                    
+                    ItemStack themeItem = createThemeItem(theme, entry.getKey().equals(currentTheme));
+                    gui.setItem(slot, themeItem);
+                    slot++;
+                }
+                
+                player.openInventory(gui);
+                return;
+            }
+        }
+
+        // Fallback para menu padrão
         String title = ChatColor.translateAlternateColorCodes('&', "&6&lTEMAS");
         if (title.length() > 32) {
             title = title.substring(0, 32);
@@ -142,9 +215,20 @@ public class ThemeSelectionGUI implements Listener {
         String displayName = ChatColor.stripColor(meta.getDisplayName());
 
         if (title.contains("TEMAS")) {
+            // Verificar permissão
+            if (!player.hasPermission("artixduels.theme.use")) {
+                player.sendMessage("§cVocê não tem permissão para usar temas!");
+                player.closeInventory();
+                return;
+            }
+
             if (displayName.contains("FECHAR")) {
                 player.closeInventory();
             } else if (displayName.contains("Customizar")) {
+                if (!player.hasPermission("artixduels.theme.customize")) {
+                    player.sendMessage("§cVocê não tem permissão para customizar temas!");
+                    return;
+                }
                 openCustomizeMenu(player);
             } else if (displayName.contains("Preview")) {
                 player.sendMessage("§7Use §e/theme preview §7para ver uma prévia.");
@@ -170,6 +254,49 @@ public class ThemeSelectionGUI implements Listener {
                     player.closeInventory();
                 }
             }
+        } else if (title.contains("TEMAS") || title.contains("Selecionar")) {
+            // Processar ações do menu configurável
+            if (menuManager != null) {
+                MenuManager.MenuData menuData = menuManager.getMenu("theme-selection");
+                if (menuData != null) {
+                    for (MenuManager.MenuItemData itemData : menuData.getItems()) {
+                        if (itemData.getSlot() == event.getSlot()) {
+                            String action = itemData.getAction();
+                            if (action != null && !action.equals("none")) {
+                                handleMenuAction(player, action);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Processar seleção de tema
+            String themeName = getThemeNameFromLore(meta.getLore());
+            if (themeName != null) {
+                themeManager.setPlayerTheme(player.getUniqueId(), themeName);
+                player.sendMessage("§aTema alterado para: §e" + themeManager.getTheme(themeName).getDisplayName());
+                player.closeInventory();
+            }
+        }
+    }
+
+    private void handleMenuAction(Player player, String action) {
+        switch (action.toLowerCase()) {
+            case "open-customize-theme":
+                if (!player.hasPermission("artixduels.theme.customize")) {
+                    player.sendMessage("§cVocê não tem permissão para customizar temas!");
+                    return;
+                }
+                openCustomizeMenu(player);
+                break;
+            case "preview-theme-hint":
+                player.sendMessage("§7Use §e/theme preview <tema> §7para ver uma prévia.");
+                player.closeInventory();
+                break;
+            case "close-menu":
+                player.closeInventory();
+                break;
         }
     }
 

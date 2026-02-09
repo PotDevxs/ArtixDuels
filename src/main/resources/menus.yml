@@ -437,3 +437,74 @@ menus:
           - "&7Fecha este menu"
           - "&8&m                              "
         action: close-menu
+
+  # Menu de Temas
+  theme-selection:
+    title: "&6&lTEMAS &7» &e&lSelecionar"
+    size: 54
+    items:
+      border-top:
+        slot: 0
+        material: STAINED_GLASS_PANE
+        data: 11
+        name: " "
+        lore: []
+        action: none
+      
+      border-left:
+        slot: 9
+        material: STAINED_GLASS_PANE
+        data: 3
+        name: " "
+        lore: []
+        action: none
+      
+      border-right:
+        slot: 17
+        material: STAINED_GLASS_PANE
+        data: 3
+        name: " "
+        lore: []
+        action: none
+      
+      border-bottom:
+        slot: 45
+        material: STAINED_GLASS_PANE
+        data: 11
+        name: " "
+        lore: []
+        action: none
+      
+      customize:
+        slot: 45
+        material: ANVIL
+        name: "&d&lCustomizar Tema"
+        lore:
+          - "&8&m                              "
+          - "&7Crie seu próprio tema"
+          - "&7personalizado"
+          - "&8&m                              "
+          - "&7Clique para customizar"
+        action: open-customize-theme
+      
+      preview:
+        slot: 47
+        material: GLASS
+        name: "&b&lPreview"
+        lore:
+          - "&8&m                              "
+          - "&7Veja uma prévia do tema"
+          - "&8&m                              "
+          - "&7Use /theme preview <tema>"
+        action: preview-theme-hint
+      
+      close:
+        slot: 49
+        material: STAINED_GLASS_PANE
+        data: 14
+        name: "&c&lFECHAR"
+        lore:
+          - "&8&m                              "
+          - "&7Fecha este menu"
+          - "&8&m                              "
+        action: close-menu

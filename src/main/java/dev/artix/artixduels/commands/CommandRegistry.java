@@ -210,6 +210,9 @@ public class CommandRegistry {
             // Temas
             dev.artix.artixduels.gui.ThemeSelectionGUI themeGUI = 
                 new dev.artix.artixduels.gui.ThemeSelectionGUI(plugin.getThemeManager());
+            if (plugin.getMenuManager() != null) {
+                themeGUI.setMenuManager(plugin.getMenuManager());
+            }
             registerCommand("theme", "Gerenciar temas visuais",
                 Arrays.asList("tema", "temas"), null,
                 new ThemeCommand(plugin.getThemeManager(), themeGUI), null);

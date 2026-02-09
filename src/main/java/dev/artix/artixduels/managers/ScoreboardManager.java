@@ -32,6 +32,7 @@ public class ScoreboardManager {
     private Map<String, String> globalPlaceholders;
     private String queueTitle;
     private List<String> queueLines;
+    private dev.artix.artixduels.managers.ThemeManager themeManager;
 
     public ScoreboardManager(StatsManager statsManager, FileConfiguration scoreboardConfig, PlaceholderManager placeholderManager, PlayerScoreboardPreferences preferences) {
         this.statsManager = statsManager;
@@ -40,6 +41,10 @@ public class ScoreboardManager {
         this.preferences = preferences;
         this.playerScoreboards = new HashMap<>();
         loadConfig();
+    }
+
+    public void setThemeManager(dev.artix.artixduels.managers.ThemeManager themeManager) {
+        this.themeManager = themeManager;
     }
 
     private void loadConfig() {
@@ -81,6 +86,10 @@ public class ScoreboardManager {
             if (modesSection != null) {
                 for (String modeName : modesSection.getKeys(false)) {
                     dev.artix.artixduels.models.DuelMode mode = dev.artix.artixduels.models.DuelMode.fromString(modeName.toUpperCase());
+                    // Mapear SOPA para SOUP
+                    if (mode == null && modeName.equalsIgnoreCase("SOPA")) {
+                        mode = dev.artix.artixduels.models.DuelMode.SOUP;
+                    }
                     if (mode != null) {
                         List<String> lines = modesSection.getStringList(modeName);
                         if (lines != null && !lines.isEmpty()) {
@@ -333,6 +342,18 @@ public class ScoreboardManager {
     private String processQueuePlaceholders(String line, Player player, PlayerStats stats, dev.artix.artixduels.models.DuelMode mode) {
         String processed = ChatColor.translateAlternateColorCodes('&', line);
         
+        // Processar placeholder <theme> - cor primária do tema do jogador
+        if (player != null && themeManager != null) {
+            try {
+                String themeColor = themeManager.getColor(player.getUniqueId(), "primary");
+                processed = processed.replace("<theme>", themeColor);
+            } catch (Exception e) {
+                processed = processed.replace("<theme>", "&f");
+            }
+        } else {
+            processed = processed.replace("<theme>", "&f");
+        }
+        
         // Substituir placeholders específicos da queue
         processed = processed.replace("<queue-mode>", mode.getDisplayName());
         processed = processed.replace("<elo>", String.valueOf(stats.getElo()));
@@ -370,6 +391,18 @@ public class ScoreboardManager {
     private String processLobbyPlaceholders(String line, Player player, PlayerStats stats) {
         String processed = ChatColor.translateAlternateColorCodes('&', line);
         
+        // Processar placeholder <theme> - cor primária do tema do jogador
+        if (player != null && themeManager != null) {
+            try {
+                String themeColor = themeManager.getColor(player.getUniqueId(), "primary");
+                processed = processed.replace("<theme>", themeColor);
+            } catch (Exception e) {
+                processed = processed.replace("<theme>", "&f");
+            }
+        } else {
+            processed = processed.replace("<theme>", "&f");
+        }
+        
         // Substituir <players> com número de jogadores online
         int onlinePlayers = Bukkit.getOnlinePlayers().size();
         processed = processed.replace("<players>", String.valueOf(onlinePlayers));
@@ -393,6 +426,18 @@ public class ScoreboardManager {
 
     private String processPlaceholders(String line, Player player, Player opponent, Duel duel) {
         String processed = ChatColor.translateAlternateColorCodes('&', line);
+        
+        // Processar placeholder <theme> - cor primária do tema do jogador
+        if (player != null && themeManager != null) {
+            try {
+                String themeColor = themeManager.getColor(player.getUniqueId(), "primary");
+                processed = processed.replace("<theme>", themeColor);
+            } catch (Exception e) {
+                processed = processed.replace("<theme>", "&f");
+            }
+        } else {
+            processed = processed.replace("<theme>", "&f");
+        }
         
         // Aplicar placeholders globais primeiro
         if (globalPlaceholders != null) {
@@ -440,6 +485,7 @@ public class ScoreboardManager {
         String isStickFight = (mode == dev.artix.artixduels.models.DuelMode.STICKFIGHT) ? "true" : "false";
         String isBoxing = (mode == dev.artix.artixduels.models.DuelMode.BOXING) ? "true" : "false";
         String isBattleRush = (mode == dev.artix.artixduels.models.DuelMode.BATTLERUSH) ? "true" : "false";
+        boolean isSopa = (mode == dev.artix.artixduels.models.DuelMode.SOUP || mode == dev.artix.artixduels.models.DuelMode.SOUPRECRAFT);
         
         // Obter estatísticas do duelo
         int player1Kills = duel.getPlayer1Kills();
@@ -452,6 +498,10 @@ public class ScoreboardManager {
         int player2Hits = duel.getPlayer2Hits();
         boolean player1BedAlive = duel.isPlayer1BedAlive();
         boolean player2BedAlive = duel.isPlayer2BedAlive();
+        int player1Sopas = duel.getPlayer1Sopas();
+        int player2Sopas = duel.getPlayer2Sopas();
+        int player1Streak = duel.getPlayer1Streak();
+        int player2Streak = duel.getPlayer2Streak();
         
         // Placeholders para Blue (B) - player1
         String bGoal = player1Goals > 0 ? "⬤" : "○";
@@ -463,6 +513,14 @@ public class ScoreboardManager {
         String rGoal = player2Goals > 0 ? "⬤" : "○";
         String rBed = player2BedAlive ? ChatColor.translateAlternateColorCodes('&', "&a&l✓") : ChatColor.translateAlternateColorCodes('&', "&c&l✗");
         String rLives = String.valueOf(player2Lives);
+        String rSopas = String.valueOf(player2Sopas);
+        
+        // Placeholders para Blue (B) - player1 (sopas)
+        String bSopas = String.valueOf(player1Sopas);
+        
+        // Placeholders para streaks
+        int yourStreak = isPlayer1 ? player1Streak : player2Streak;
+        String streaks = String.valueOf(yourStreak);
         
         // Placeholders gerais
         int totalKills = player1Kills + player2Kills;
@@ -496,6 +554,13 @@ public class ScoreboardManager {
         processed = processed.replace("<opponent_hits>", String.valueOf(opponentHits));
         processed = processed.replace("<combo>", comboText);
         processed = processed.replace("<bRed>", bRed);
+        
+        // Placeholders específicos do modo SOPA
+        if (isSopa) {
+            processed = processed.replace("<bSopas>", bSopas);
+            processed = processed.replace("<rSopas>", rSopas);
+            processed = processed.replace("<streaks>", streaks);
+        }
         
         return processed;
     }

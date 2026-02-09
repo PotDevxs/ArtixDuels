@@ -161,6 +161,9 @@ public final class ArtixDuels extends JavaPlugin {
         scoreboardPreferences = new PlayerScoreboardPreferences(getDataFolder());
         scoreboardManager = new ScoreboardManager(statsManager, scoreboardConfig, placeholderManager, scoreboardPreferences);
         scoreboardManager.setDuelManager(duelManager);
+        if (themeManager != null) {
+            scoreboardManager.setThemeManager(themeManager);
+        }
         duelManager.setScoreboardManager(scoreboardManager);
 
         tablistManager = new TablistManager(tablistConfig, statsManager, duelManager);
@@ -198,6 +201,9 @@ public final class ArtixDuels extends JavaPlugin {
         
         dev.artix.artixduels.gui.ThemeSelectionGUI themeGUI = 
             new dev.artix.artixduels.gui.ThemeSelectionGUI(themeManager);
+        if (menuManager != null) {
+            themeGUI.setMenuManager(menuManager);
+        }
         getServer().getPluginManager().registerEvents(themeGUI, this);
         
         dev.artix.artixduels.gui.AchievementGUI achievementGUI = 
@@ -251,6 +257,10 @@ public final class ArtixDuels extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new LobbyProtectionListener(this, duelManager), this);
         getServer().getPluginManager().registerEvents(new HologramListener(this), this);
         getServer().getPluginManager().registerEvents(new dev.artix.artixduels.listeners.TrainingListener(trainingManager), this);
+        getServer().getPluginManager().registerEvents(new dev.artix.artixduels.listeners.SoupListener(duelManager, scoreboardManager), this);
+        dev.artix.artixduels.listeners.CombatListener combatListener = new dev.artix.artixduels.listeners.CombatListener(duelManager, combatAnalyzer);
+        combatListener.setScoreboardManager(scoreboardManager);
+        getServer().getPluginManager().registerEvents(combatListener, this);
         if (getServer().getPluginManager().getPlugin("Citizens") != null) {
             getServer().getPluginManager().registerEvents(new NPCListener(duelNPC), this);
         }
@@ -518,6 +528,9 @@ public final class ArtixDuels extends JavaPlugin {
         if (scoreboardManager != null && duelManager != null && scoreboardPreferences != null) {
             PlaceholderManager placeholderManager = new PlaceholderManager(this, duelManager, statsManager);
             scoreboardManager.setDuelManager(duelManager);
+            if (themeManager != null) {
+                scoreboardManager.setThemeManager(themeManager);
+            }
             scoreboardManager.reload(scoreboardConfig, placeholderManager);
             duelManager.setScoreboardManager(scoreboardManager);
         }

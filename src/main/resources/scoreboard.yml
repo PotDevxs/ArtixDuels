@@ -96,3 +96,10 @@ duel:
       - " "
       - "&7Goals: &b<goals>"
 
+    SOPA:
+      - " "
+      - "&9[You] <bSopas>"
+      - "&c[Them] <rSopas>"
+      - " "
+      - "&7Streak: &b<streaks>"
+

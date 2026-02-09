@@ -90,6 +90,10 @@ public class MenuManager {
     }
 
     public ItemStack createMenuItem(String menuName, String itemName) {
+        return createMenuItem(menuName, itemName, null);
+    }
+
+    public ItemStack createMenuItem(String menuName, String itemName, org.bukkit.entity.Player player) {
         MenuData menu = menus.get(menuName);
         if (menu == null) return null;
 
@@ -99,12 +103,39 @@ public class MenuManager {
         ItemStack item = new ItemStack(itemData.getMaterial(), 1, itemData.getData());
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
-            meta.setDisplayName(itemData.getName());
-            meta.setLore(itemData.getLore());
+            String displayName = itemData.getName();
+            List<String> lore = new ArrayList<>(itemData.getLore());
+            
+            // Processar placeholder <theme> se houver jogador
+            if (player != null) {
+                displayName = processThemePlaceholder(displayName, player);
+                List<String> processedLore = new ArrayList<>();
+                for (String loreLine : lore) {
+                    processedLore.add(processThemePlaceholder(loreLine, player));
+                }
+                lore = processedLore;
+            }
+            
+            meta.setDisplayName(displayName);
+            meta.setLore(lore);
             item.setItemMeta(meta);
         }
 
         return item;
+    }
+
+    private String processThemePlaceholder(String text, org.bukkit.entity.Player player) {
+        try {
+            dev.artix.artixduels.managers.ThemeManager themeManager = 
+                plugin.getThemeManager();
+            if (themeManager != null) {
+                String themeColor = themeManager.getColor(player.getUniqueId(), "primary");
+                return text.replace("<theme>", themeColor);
+            }
+        } catch (Exception e) {
+            // Ignorar erros
+        }
+        return text.replace("<theme>", "&f");
     }
 
     public String getMenuTitle(String menuName) {

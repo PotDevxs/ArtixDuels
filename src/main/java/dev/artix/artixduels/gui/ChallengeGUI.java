@@ -80,7 +80,7 @@ public class ChallengeGUI implements Listener {
             if (slot >= 45) break;
 
             ChallengeProgress progress = challengeManager.getProgress(player.getUniqueId(), challenge.getId());
-            ItemStack challengeItem = createChallengeItem(challenge, progress);
+            ItemStack challengeItem = createChallengeItem(challenge, progress, player);
             gui.setItem(slot, challengeItem);
             slot++;
         }
@@ -147,18 +147,39 @@ public class ChallengeGUI implements Listener {
     }
 
     private ItemStack createChallengeItem(Challenge challenge, ChallengeProgress progress) {
+        return createChallengeItem(challenge, progress, null);
+    }
+
+    private ItemStack createChallengeItem(Challenge challenge, ChallengeProgress progress, Player player) {
         ItemStack item = new ItemStack(challenge.getDisplayMaterial(), 1, (short) challenge.getDisplayData());
         ItemMeta meta = item.getItemMeta();
         
         String statusColor = progress.isCompleted() ? "&a" : "&7";
         String statusText = progress.isCompleted() ? "&a&lCONCLUÍDO" : "&7Em progresso";
         
+        String challengeName = challenge.getName();
+        String challengeDescription = challenge.getDescription();
+        
+        // Processar placeholder <theme> se houver jogador
+        if (player != null) {
+            try {
+                dev.artix.artixduels.managers.ThemeManager themeManager = 
+                    ((dev.artix.artixduels.ArtixDuels) org.bukkit.Bukkit.getPluginManager().getPlugin("ArtixDuels")).getThemeManager();
+                if (themeManager != null) {
+                    challengeName = themeManager.processThemePlaceholder(challengeName, player.getUniqueId());
+                    challengeDescription = themeManager.processThemePlaceholder(challengeDescription, player.getUniqueId());
+                }
+            } catch (Exception e) {
+                // Ignorar erros
+            }
+        }
+        
         meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', 
-            statusColor + challenge.getName()));
+            statusColor + challengeName));
 
         List<String> lore = new ArrayList<>();
         lore.add("&8&m                              ");
-        lore.add("&7" + challenge.getDescription());
+        lore.add("&7" + challengeDescription);
         lore.add("&8&m                              ");
         
         int progressPercent = challenge.getTarget() > 0 ? 
