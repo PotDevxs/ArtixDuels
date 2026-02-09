@@ -4,7 +4,7 @@
   <groupId>dev.artix</groupId>
   <artifactId>ArtixDuels-Remake</artifactId>
   <name>ArtixDuels</name>
-  <version>8.0</version>
+  <version>8.1</version>
   <build>
     <resources>
       <resource>

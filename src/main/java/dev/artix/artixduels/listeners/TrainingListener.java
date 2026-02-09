@@ -2,8 +2,10 @@ package dev.artix.artixduels.listeners;
 
 import dev.artix.artixduels.managers.TrainingManager;
 import dev.artix.artixduels.models.TrainingBot;
+import net.citizensnpcs.api.CitizensAPI;
+import net.citizensnpcs.api.npc.NPC;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Zombie;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
@@ -11,7 +13,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 /**
- * Listener para eventos de treinamento.
+ * Listener para eventos de treinamento (bot = Citizens NPC com aparência de jogador).
  */
 public class TrainingListener implements Listener {
     private final TrainingManager trainingManager;
@@ -20,38 +22,40 @@ public class TrainingListener implements Listener {
         this.trainingManager = trainingManager;
     }
 
+    private static boolean isTrainingBot(Entity entity) {
+        if (entity == null || !CitizensAPI.hasImplementation()) return false;
+        if (!CitizensAPI.getNPCRegistry().isNPC(entity)) return false;
+        NPC npc = CitizensAPI.getNPCRegistry().getNPC(entity);
+        return npc != null && npc.data().has("TrainingBot");
+    }
+
     @EventHandler
     public void onEntityDamage(EntityDamageByEntityEvent event) {
-        if (event.getEntity() instanceof Zombie && event.getDamager() instanceof Player) {
-            Zombie zombie = (Zombie) event.getEntity();
-            Player player = (Player) event.getDamager();
-            
-            if (zombie.hasMetadata("TrainingBot")) {
-                TrainingBot bot = trainingManager.getBotByEntity(zombie);
-                if (bot != null) {
-                    dev.artix.artixduels.models.TrainingSession session = trainingManager.getSession(player.getUniqueId());
-                    if (session != null && session.getBot().getBotId().equals(bot.getBotId())) {
-                        double damage = event.getFinalDamage();
-                        session.getStats().addPlayerDamageDealt(damage);
-                        session.getStats().addBotDamageTaken(damage);
-                        session.getStats().addPlayerHit();
-                    }
+        Entity damaged = event.getEntity();
+        Entity damager = event.getDamager();
+
+        if (isTrainingBot(damaged) && damager instanceof Player) {
+            TrainingBot bot = trainingManager.getBotByEntity(damaged);
+            if (bot != null) {
+                Player player = (Player) damager;
+                dev.artix.artixduels.models.TrainingSession session = trainingManager.getSession(player.getUniqueId());
+                if (session != null && session.getBot().getBotId().equals(bot.getBotId())) {
+                    double damage = event.getFinalDamage();
+                    session.getStats().addPlayerDamageDealt(damage);
+                    session.getStats().addBotDamageTaken(damage);
+                    session.getStats().addPlayerHit();
                 }
             }
-        } else if (event.getEntity() instanceof Player && event.getDamager() instanceof Zombie) {
-            Player player = (Player) event.getEntity();
-            Zombie zombie = (Zombie) event.getDamager();
-            
-            if (zombie.hasMetadata("TrainingBot")) {
-                TrainingBot bot = trainingManager.getBotByEntity(zombie);
-                if (bot != null) {
-                    dev.artix.artixduels.models.TrainingSession session = trainingManager.getSession(player.getUniqueId());
-                    if (session != null && session.getBot().getBotId().equals(bot.getBotId())) {
-                        double damage = event.getFinalDamage();
-                        session.getStats().addBotDamageDealt(damage);
-                        session.getStats().addPlayerDamageTaken(damage);
-                        session.getStats().addBotHit();
-                    }
+        } else if (damaged instanceof Player && isTrainingBot(damager)) {
+            Player player = (Player) damaged;
+            TrainingBot bot = trainingManager.getBotByEntity(damager);
+            if (bot != null) {
+                dev.artix.artixduels.models.TrainingSession session = trainingManager.getSession(player.getUniqueId());
+                if (session != null && session.getBot().getBotId().equals(bot.getBotId())) {
+                    double damage = event.getFinalDamage();
+                    session.getStats().addBotDamageDealt(damage);
+                    session.getStats().addPlayerDamageTaken(damage);
+                    session.getStats().addBotHit();
                 }
             }
         }
@@ -59,19 +63,18 @@ public class TrainingListener implements Listener {
 
     @EventHandler
     public void onEntityDeath(EntityDeathEvent event) {
-        if (event.getEntity() instanceof Zombie) {
-            Zombie zombie = (Zombie) event.getEntity();
-            if (zombie.hasMetadata("TrainingBot")) {
-                event.getDrops().clear();
-                event.setDroppedExp(0);
-                
-                TrainingBot bot = trainingManager.getBotByEntity(zombie);
-                if (bot != null) {
-                    trainingManager.handleBotDeath(bot);
-                }
+        Entity entity = event.getEntity();
+
+        if (isTrainingBot(entity)) {
+            event.getDrops().clear();
+            event.setDroppedExp(0);
+
+            TrainingBot bot = trainingManager.getBotByEntity(entity);
+            if (bot != null) {
+                trainingManager.handleBotDeath(bot);
             }
-        } else if (event.getEntity() instanceof Player) {
-            Player player = (Player) event.getEntity();
+        } else if (entity instanceof Player) {
+            Player player = (Player) entity;
             dev.artix.artixduels.models.TrainingSession session = trainingManager.getSession(player.getUniqueId());
             if (session != null) {
                 event.getDrops().clear();
@@ -90,4 +93,3 @@ public class TrainingListener implements Listener {
         }
     }
 }
-

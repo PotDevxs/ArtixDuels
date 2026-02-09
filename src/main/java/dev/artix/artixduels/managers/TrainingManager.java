@@ -2,10 +2,17 @@ package dev.artix.artixduels.managers;
 
 import dev.artix.artixduels.ArtixDuels;
 import dev.artix.artixduels.models.*;
+import net.citizensnpcs.api.CitizensAPI;
+import net.citizensnpcs.api.npc.NPC;
+import net.citizensnpcs.api.trait.trait.Equipment;
+import net.citizensnpcs.trait.SkinTrait;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Zombie;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scheduler.BukkitRunnable;
 
@@ -64,22 +71,37 @@ public class TrainingManager {
 
         arena.setInUse(true);
 
+        if (!CitizensAPI.hasImplementation()) {
+            player.sendMessage("§cO plugin Citizens é necessário para o modo treino com bot!");
+            arena.setInUse(false);
+            return null;
+        }
+
         String botName = "§7[Bot] §e" + difficulty.getDisplayName();
+        String npcDisplayName = ChatColor.stripColor(botName);
         TrainingBot bot = new TrainingBot(botName, difficulty, plugin);
-        
+
         Location spawnLocation = arena.getPlayer1Spawn();
         if (spawnLocation == null) {
             spawnLocation = arena.getPlayer2Spawn();
             if (spawnLocation == null) {
                 player.sendMessage("§cArena não tem spawn configurado!");
+                arena.setInUse(false);
                 return null;
             }
         }
 
-        Zombie botEntity = spawnLocation.getWorld().spawn(spawnLocation, Zombie.class);
-        botEntity.setCustomName(botName);
-        botEntity.setCustomNameVisible(true);
-        bot.setEntity(botEntity, plugin);
+        NPC npc = CitizensAPI.getNPCRegistry().createNPC(EntityType.PLAYER, npcDisplayName);
+        npc.data().set("TrainingBot", true);
+        npc.data().set("BotId", bot.getBotId().toString());
+        npc.spawn(spawnLocation);
+
+        SkinTrait skinTrait = npc.getTrait(SkinTrait.class);
+        if (skinTrait != null) {
+            skinTrait.setSkinName("Steve");
+        }
+
+        bot.setNPC(npc, plugin);
         bot.setTarget(player);
         bot.setMaxHealth(20.0);
         bot.setHealth(20.0);
@@ -97,7 +119,7 @@ public class TrainingManager {
             player.teleport(playerSpawn);
         }
         giveKit(player, kit);
-        giveBotKit(botEntity, kit);
+        giveBotKit(npc, kit);
 
         player.sendMessage("§aTreinamento iniciado contra bot " + difficulty.getDisplayName() + "!");
         player.sendMessage("§7Use §e/training stop §7para parar o treinamento.");
@@ -148,19 +170,19 @@ public class TrainingManager {
     }
 
     /**
-     * Obtém um bot por entidade.
+     * Obtém um bot por entidade (Citizens NPC).
      */
-    public TrainingBot getBotByEntity(Zombie entity) {
-        if (entity.hasMetadata("BotId")) {
-            String botIdStr = entity.getMetadata("BotId").get(0).asString();
-            try {
-                UUID botId = UUID.fromString(botIdStr);
-                return activeBots.get(botId);
-            } catch (IllegalArgumentException e) {
-                return null;
-            }
+    public TrainingBot getBotByEntity(Entity entity) {
+        if (entity == null || !CitizensAPI.hasImplementation()) return null;
+        if (!CitizensAPI.getNPCRegistry().isNPC(entity)) return null;
+        NPC npc = CitizensAPI.getNPCRegistry().getNPC(entity);
+        if (npc == null || !npc.data().has("TrainingBot") || !npc.data().has("BotId")) return null;
+        try {
+            UUID botId = UUID.fromString(npc.data().get("BotId").toString());
+            return activeBots.get(botId);
+        } catch (Exception e) {
+            return null;
         }
-        return null;
     }
 
     /**
@@ -190,26 +212,33 @@ public class TrainingManager {
     }
 
     /**
-     * Dá kit para o bot.
+     * Dá kit para o bot (Citizens NPC - Equipment trait).
      */
-    private void giveBotKit(Zombie bot, Kit kit) {
-        bot.getEquipment().clear();
-        
+    private void giveBotKit(NPC npc, Kit kit) {
+        Equipment equipment = npc.getTrait(Equipment.class);
+        if (equipment == null) return;
+
+        equipment.set(Equipment.EquipmentSlot.HAND, null);
+        equipment.set(Equipment.EquipmentSlot.HELMET, null);
+        equipment.set(Equipment.EquipmentSlot.CHESTPLATE, null);
+        equipment.set(Equipment.EquipmentSlot.LEGGINGS, null);
+        equipment.set(Equipment.EquipmentSlot.BOOTS, null);
+
         if (kit.getContents() != null && kit.getContents().length > 0) {
             for (ItemStack item : kit.getContents()) {
-                if (item != null) {
-                    bot.getEquipment().setItemInHand(item);
+                if (item != null && item.getType() != org.bukkit.Material.AIR) {
+                    equipment.set(Equipment.EquipmentSlot.HAND, item.clone());
                     break;
                 }
             }
         }
-        
+
         if (kit.getArmor() != null) {
             ItemStack[] armor = kit.getArmor();
-            bot.getEquipment().setHelmet(armor[0]);
-            bot.getEquipment().setChestplate(armor[1]);
-            bot.getEquipment().setLeggings(armor[2]);
-            bot.getEquipment().setBoots(armor[3]);
+            if (armor[0] != null) equipment.set(Equipment.EquipmentSlot.HELMET, armor[0].clone());
+            if (armor[1] != null) equipment.set(Equipment.EquipmentSlot.CHESTPLATE, armor[1].clone());
+            if (armor[2] != null) equipment.set(Equipment.EquipmentSlot.LEGGINGS, armor[2].clone());
+            if (armor[3] != null) equipment.set(Equipment.EquipmentSlot.BOOTS, armor[3].clone());
         }
     }
 
@@ -248,7 +277,8 @@ public class TrainingManager {
             @Override
             public void run() {
                 for (TrainingBot bot : new ArrayList<>(activeBots.values())) {
-                    if (bot.getEntity() == null || bot.getEntity().isDead()) {
+                    LivingEntity entity = bot.getEntity();
+                    if (entity == null || entity.isDead()) {
                         continue;
                     }
 
@@ -269,11 +299,12 @@ public class TrainingManager {
     }
 
     /**
-     * Atualiza IA do bot.
+     * Atualiza IA do bot (Citizens NPC - movimento e ataque).
      */
     private void updateBotAI(TrainingBot bot, Player target, TrainingSession session) {
-        Zombie entity = bot.getEntity();
-        if (entity == null || entity.isDead()) {
+        LivingEntity entity = bot.getEntity();
+        NPC npc = bot.getNPC();
+        if (entity == null || entity.isDead() || npc == null || !npc.isSpawned()) {
             return;
         }
 
@@ -285,17 +316,18 @@ public class TrainingManager {
         Random random = new Random();
 
         if (distance > 20) {
-            entity.teleport(targetLoc);
+            npc.teleport(targetLoc, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.PLUGIN);
         } else if (distance > 3) {
             if (random.nextDouble() < difficulty.getMovementChance()) {
-                entity.setTarget(target);
+                npc.getNavigator().setTarget(target, true);
             }
         } else {
+            npc.getNavigator().cancelNavigation();
             if (random.nextDouble() < difficulty.getHitChance()) {
                 target.damage(1.0, entity);
                 session.getStats().addBotHit();
                 bot.incrementCombo();
-                
+
                 if (bot.getComboCount() >= 3 && random.nextDouble() < difficulty.getComboChance()) {
                     session.getStats().addBotCombo();
                 }
@@ -323,25 +355,32 @@ public class TrainingManager {
     }
 
     /**
-     * Processa morte do bot.
+     * Processa morte do bot (Citizens NPC - respawn após delay).
      */
     public void handleBotDeath(TrainingBot bot) {
         TrainingSession session = getSessionForBot(bot);
         if (session != null) {
             session.getStats().addPlayerKill();
-            
+
             Player player = Bukkit.getPlayer(session.getPlayerId());
             if (player != null && player.isOnline()) {
                 player.sendMessage("§aVocê eliminou o bot!");
-                
-                Bukkit.getScheduler().runTaskLater(plugin, () -> {
-                    bot.setHealth(bot.getMaxHealth());
-                    bot.getEntity().setHealth(bot.getMaxHealth());
-                    Location spawnLoc = arenaManager.getArena(session.getArenaName()).getPlayer1Spawn();
-                    if (spawnLoc != null) {
-                        bot.getEntity().teleport(spawnLoc);
-                    }
-                }, 60L);
+
+                NPC npc = bot.getNPC();
+                Location spawnLoc = arenaManager.getArena(session.getArenaName()).getPlayer1Spawn();
+                if (npc != null && spawnLoc != null) {
+                    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                        if (npc.isSpawned()) {
+                            npc.despawn();
+                        }
+                        npc.spawn(spawnLoc);
+                        bot.setHealth(bot.getMaxHealth());
+                        LivingEntity ent = bot.getEntity();
+                        if (ent != null) {
+                            ent.setHealth(ent.getMaxHealth());
+                        }
+                    }, 60L);
+                }
             }
         }
     }

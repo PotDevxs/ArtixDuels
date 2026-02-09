@@ -1,20 +1,20 @@
 package dev.artix.artixduels.models;
 
+import net.citizensnpcs.api.npc.NPC;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-import org.bukkit.entity.Zombie;
-import org.bukkit.metadata.FixedMetadataValue;
 import org.bukkit.plugin.Plugin;
 
 import java.util.UUID;
 
 /**
- * Representa um bot de treinamento.
+ * Representa um bot de treinamento (Citizens NPC com aparência de jogador).
  */
 public class TrainingBot {
     private UUID botId;
     private String botName;
     private BotDifficulty difficulty;
-    private Zombie entity;
+    private NPC npc;
     private Player target;
     private long lastAction;
     private int comboCount;
@@ -45,17 +45,23 @@ public class TrainingBot {
         return difficulty;
     }
 
-    public Zombie getEntity() {
-        return entity;
+    /**
+     * Retorna a entidade viva do NPC (para saúde, localização, dano).
+     */
+    public LivingEntity getEntity() {
+        if (npc == null || !npc.isSpawned()) return null;
+        return npc.getEntity() instanceof LivingEntity ? (LivingEntity) npc.getEntity() : null;
     }
 
-    public void setEntity(Zombie entity, Plugin plugin) {
-        this.entity = entity;
-        if (entity != null) {
-            entity.setCustomName(botName);
-            entity.setCustomNameVisible(true);
-            entity.setMetadata("TrainingBot", new FixedMetadataValue(plugin, true));
-            entity.setMetadata("BotId", new FixedMetadataValue(plugin, botId.toString()));
+    public NPC getNPC() {
+        return npc;
+    }
+
+    public void setNPC(NPC npc, Plugin plugin) {
+        this.npc = npc;
+        if (npc != null) {
+            npc.data().set("TrainingBot", true);
+            npc.data().set("BotId", botId.toString());
         }
     }
 
@@ -101,8 +107,9 @@ public class TrainingBot {
 
     public void setHealth(double health) {
         this.health = health;
+        LivingEntity entity = getEntity();
         if (entity != null) {
-            entity.setHealth(health);
+            entity.setHealth(Math.min(health, entity.getMaxHealth()));
         }
     }
 
@@ -112,15 +119,16 @@ public class TrainingBot {
 
     public void setMaxHealth(double maxHealth) {
         this.maxHealth = maxHealth;
+        LivingEntity entity = getEntity();
         if (entity != null) {
             entity.setMaxHealth(maxHealth);
         }
     }
 
     public void remove() {
-        if (entity != null && !entity.isDead()) {
-            entity.remove();
+        if (npc != null) {
+            npc.destroy();
+            npc = null;
         }
     }
 }
-

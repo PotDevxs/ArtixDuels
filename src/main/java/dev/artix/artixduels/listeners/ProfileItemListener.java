@@ -11,6 +11,9 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -207,6 +210,54 @@ public class ProfileItemListener implements Listener {
         
         leaveItem.setItemMeta(meta);
         player.getInventory().setItem(4, leaveItem);
+    }
+
+    /**
+     * Verifica se o item é um dos itens fixos do menu (não podem ser movidos ou dropados).
+     */
+    public static boolean isFixedMenuItem(ItemStack item) {
+        if (item == null || item.getType() == Material.AIR) return false;
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null || !meta.hasDisplayName()) return false;
+        String name = ChatColor.stripColor(meta.getDisplayName());
+        return name.contains("Procurar Partida") || name.contains("Queue")
+            || name.contains("Perfil") || name.contains("Profile")
+            || name.contains("Desafiar") || name.contains("Challenge")
+            || name.contains("Sair da Fila") || name.contains("Leave Queue");
+    }
+
+    @EventHandler
+    public void onPlayerDropItem(PlayerDropItemEvent event) {
+        if (isFixedMenuItem(event.getItemDrop().getItemStack())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) return;
+        if (isFixedMenuItem(event.getCurrentItem()) || isFixedMenuItem(event.getCursor())) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onInventoryDrag(InventoryDragEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) return;
+        if (isFixedMenuItem(event.getOldCursor())) {
+            event.setCancelled(true);
+            return;
+        }
+        int topSize = event.getView().getTopInventory().getSize();
+        for (int rawSlot : event.getRawSlots()) {
+            if (rawSlot >= topSize) {
+                int bottomSlot = rawSlot - topSize;
+                if (bottomSlot == QUEUE_ITEM_SLOT || bottomSlot == PROFILE_ITEM_SLOT || bottomSlot == CHALLENGE_ITEM_SLOT) {
+                    event.setCancelled(true);
+                    return;
+                }
+            }
+        }
     }
 }
 
