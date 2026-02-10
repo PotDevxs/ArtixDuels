@@ -146,6 +146,9 @@ public final class ArtixDuels extends JavaPlugin {
         cosmeticManager = new dev.artix.artixduels.managers.CosmeticManager(this, statsManager);
         tournamentManager = new dev.artix.artixduels.managers.TournamentManager(this, duelManager, statsManager);
         replayManager = new dev.artix.artixduels.managers.ReplayManager(this);
+        trainingManager = new dev.artix.artixduels.managers.TrainingManager(this, kitManager, arenaManager);
+        antiCheatManager = new dev.artix.artixduels.managers.AntiCheatManager(this, getConfig());
+        reportManager = new dev.artix.artixduels.managers.ReportManager(this);
         
         // Integrar sistemas no DuelManager
         duelManager.setCombatAnalyzer(combatAnalyzer);

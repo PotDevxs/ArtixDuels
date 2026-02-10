@@ -82,8 +82,10 @@ public class StatsDAO implements IStatsDAO {
     }
 
     private PlayerStats documentToStats(Document doc) {
+        String playerIdStr = doc.getString("playerId");
+        if (playerIdStr == null) return null;
         PlayerStats stats = new PlayerStats();
-        stats.setPlayerId(UUID.fromString(doc.getString("playerId")));
+        stats.setPlayerId(UUID.fromString(playerIdStr));
         stats.setPlayerName(doc.getString("playerName"));
         stats.setWins(doc.getInteger("wins", 0));
         stats.setLosses(doc.getInteger("losses", 0));
