@@ -2,9 +2,6 @@ package dev.artix.artixduels.models;
 
 import java.util.UUID;
 
-/**
- * Representa uma sessão de treinamento.
- */
 public class TrainingSession {
     private UUID sessionId;
     private UUID playerId;
@@ -29,65 +26,51 @@ public class TrainingSession {
         this.stats = new TrainingStats();
         this.active = true;
     }
-
     public UUID getSessionId() {
         return sessionId;
     }
-
     public UUID getPlayerId() {
         return playerId;
     }
-
     public TrainingBot getBot() {
         return bot;
     }
-
     public String getKitName() {
         return kitName;
     }
-
     public String getArenaName() {
         return arenaName;
     }
-
     public DuelMode getMode() {
         return mode;
     }
-
     public long getStartTime() {
         return startTime;
     }
-
     public long getEndTime() {
         return endTime;
     }
-
     public void setEndTime(long endTime) {
         this.endTime = endTime;
     }
-
     public long getDuration() {
         if (endTime == 0) {
             return System.currentTimeMillis() - startTime;
         }
         return endTime - startTime;
     }
-
     public TrainingStats getStats() {
         return stats;
     }
-
     public boolean isActive() {
         return active;
     }
-
     public void setActive(boolean active) {
         this.active = active;
         if (!active) {
             this.endTime = System.currentTimeMillis();
         }
     }
-
     public static class TrainingStats {
         private int playerHits;
         private int botHits;
@@ -99,7 +82,6 @@ public class TrainingSession {
         private double botDamageDealt;
         private double playerDamageTaken;
         private double botDamageTaken;
-
         public TrainingStats() {
             this.playerHits = 0;
             this.botHits = 0;
@@ -112,92 +94,70 @@ public class TrainingSession {
             this.playerDamageTaken = 0;
             this.botDamageTaken = 0;
         }
-
         public int getPlayerHits() {
             return playerHits;
         }
-
         public void addPlayerHit() {
             this.playerHits++;
         }
-
         public int getBotHits() {
             return botHits;
         }
-
         public void addBotHit() {
             this.botHits++;
         }
-
         public int getPlayerKills() {
             return playerKills;
         }
-
         public void addPlayerKill() {
             this.playerKills++;
         }
-
         public int getBotKills() {
             return botKills;
         }
-
         public void addBotKill() {
             this.botKills++;
         }
-
         public int getPlayerCombos() {
             return playerCombos;
         }
-
         public void addPlayerCombo() {
             this.playerCombos++;
         }
-
         public int getBotCombos() {
             return botCombos;
         }
-
         public void addBotCombo() {
             this.botCombos++;
         }
-
         public double getPlayerDamageDealt() {
             return playerDamageDealt;
         }
-
         public void addPlayerDamageDealt(double damage) {
             this.playerDamageDealt += damage;
         }
-
         public double getBotDamageDealt() {
             return botDamageDealt;
         }
-
         public void addBotDamageDealt(double damage) {
             this.botDamageDealt += damage;
         }
-
         public double getPlayerDamageTaken() {
             return playerDamageTaken;
         }
-
         public void addPlayerDamageTaken(double damage) {
             this.playerDamageTaken += damage;
         }
-
         public double getBotDamageTaken() {
             return botDamageTaken;
         }
-
         public void addBotDamageTaken(double damage) {
             this.botDamageTaken += damage;
         }
-
         public double getPlayerAccuracy() {
             if (playerHits + botHits == 0) return 0.0;
             return (double) playerHits / (playerHits + botHits) * 100.0;
         }
-
         public double getPlayerWinRate() {
             int totalRounds = playerKills + botKills;
             if (totalRounds == 0) return 0.0;
@@ -205,4 +165,3 @@ public class TrainingSession {
         }
     }
 }
-

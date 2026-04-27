@@ -23,6 +23,8 @@ public class BattlePass {
         this.startTime = startTime;
         this.endTime = endTime;
         this.maxLevel = maxLevel;
+        this.freeRewards = new java.util.HashMap<>();
+        this.premiumRewards = new java.util.HashMap<>();
     }
 
     public String getId() {
@@ -150,6 +152,13 @@ public class BattlePass {
             if (newLevel > level) {
                 level = Math.min(newLevel, 100);
             }
+        }
+
+        /** Recalcula nível a partir do XP (útil após carregar do arquivo). */
+        public void syncLevelFromXp(int maxLevelCap) {
+            int xpPerLevel = 100;
+            int calculated = Math.max(1, (xp / xpPerLevel) + 1);
+            this.level = Math.min(calculated, Math.max(1, maxLevelCap));
         }
     }
 }

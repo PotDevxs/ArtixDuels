@@ -205,8 +205,19 @@ public class DuelManager {
     }
 
     private void savePlayerInventory(Player player) {
-        savedInventories.put(player.getUniqueId(), player.getInventory().getContents().clone());
-        savedArmor.put(player.getUniqueId(), player.getInventory().getArmorContents().clone());
+        ItemStack[] live = player.getInventory().getContents();
+        ItemStack[] snapshot = new ItemStack[36];
+        for (int i = 0; i < live.length && i < snapshot.length; i++) {
+            snapshot[i] = live[i] != null ? live[i].clone() : null;
+        }
+        savedInventories.put(player.getUniqueId(), snapshot);
+
+        ItemStack[] arm = player.getInventory().getArmorContents();
+        ItemStack[] armCopy = new ItemStack[arm.length];
+        for (int i = 0; i < arm.length; i++) {
+            armCopy[i] = arm[i] != null ? arm[i].clone() : null;
+        }
+        savedArmor.put(player.getUniqueId(), armCopy);
     }
 
     private void savePlayerLocation(Player player) {
@@ -220,8 +231,18 @@ public class DuelManager {
 
     private void giveKit(Player player, Kit kit) {
         player.getInventory().clear();
-        player.getInventory().setContents(kit.getContents());
-        player.getInventory().setArmorContents(kit.getArmor());
+        ItemStack[] src = kit.getContents();
+        ItemStack[] kitCopy = new ItemStack[36];
+        for (int i = 0; i < src.length && i < kitCopy.length; i++) {
+            kitCopy[i] = src[i] != null ? src[i].clone() : null;
+        }
+        player.getInventory().setContents(kitCopy);
+        ItemStack[] ar = kit.getArmor();
+        ItemStack[] armorCopy = new ItemStack[ar.length];
+        for (int i = 0; i < ar.length; i++) {
+            armorCopy[i] = ar[i] != null ? ar[i].clone() : null;
+        }
+        player.getInventory().setArmorContents(armorCopy);
         player.updateInventory();
     }
 
@@ -283,33 +304,21 @@ public class DuelManager {
                     cosmeticManager.playVictoryEffect(winner);
                 }
                 
-                rewardManager.giveWinRewards(winner);
                 PlayerStats winnerStats = statsManager.getPlayerStats(winner);
                 winnerStats.addXp(50);
                 statsManager.savePlayerStats(winnerStats);
                 scoreboardManager.removeScoreboard(winner);
                 scoreboardManager.createLobbyScoreboard(winner);
                 cooldownManager.setDuelCooldown(winnerId);
-                
-                dev.artix.artixduels.listeners.ProfileItemListener profileItemListener = plugin.getProfileItemListener();
-                if (profileItemListener != null) {
-                    profileItemListener.giveHotbarItems(winner);
-                }
             }
             if (loser != null) {
                 loser.sendMessage("§c§lDERROTA!");
-                rewardManager.giveLossRewards(loser);
                 PlayerStats loserStats = statsManager.getPlayerStats(loser);
                 loserStats.addXp(10);
                 statsManager.savePlayerStats(loserStats);
                 scoreboardManager.removeScoreboard(loser);
                 scoreboardManager.createLobbyScoreboard(loser);
                 cooldownManager.setDuelCooldown(loserId);
-                
-                dev.artix.artixduels.listeners.ProfileItemListener profileItemListener = plugin.getProfileItemListener();
-                if (profileItemListener != null) {
-                    profileItemListener.giveHotbarItems(loser);
-                }
             }
             statsManager.updatePlayerStats(winnerId, loserId, duel.getMode());
             
@@ -382,6 +391,16 @@ public class DuelManager {
         spectatorManager.removeAllSpectators(duel);
         restorePlayers(winner, loser);
         cleanupDuel(duel);
+
+        // Recompensas em item só depois de restaurar o inventário do lobby (evita kit + itens duplicados)
+        if (!draw && rewardManager != null) {
+            if (winner != null && winner.isOnline()) {
+                rewardManager.giveWinRewards(winner);
+            }
+            if (loser != null && loser.isOnline()) {
+                rewardManager.giveLossRewards(loser);
+            }
+        }
     }
 
     private void saveDuelHistory(Duel duel, UUID winnerId, UUID loserId, boolean draw, long duration) {

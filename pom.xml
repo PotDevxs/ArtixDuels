@@ -6,7 +6,7 @@
 
   <groupId>dev.artix</groupId>
   <artifactId>ArtixDuels-Remake</artifactId>
-  <version>8.2</version>
+  <version>8.3-HOTFIX</version>
   <packaging>jar</packaging>
 
   <name>ArtixDuels</name>

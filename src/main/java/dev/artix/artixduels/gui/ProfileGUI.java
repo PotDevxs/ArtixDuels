@@ -9,8 +9,10 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -325,14 +327,20 @@ public class ProfileGUI implements Listener {
         }
     }
 
-    @EventHandler
+    /**
+     * menus.yml: "PERFIL" em caps — não usar .contains("Perfil") no título com cores.
+     */
+    private static boolean isProfileMenuTitle(String viewTitle) {
+        String t = ChatColor.stripColor(viewTitle).toLowerCase();
+        return t.contains("perfil") || t.contains("profile") || t.contains("estat");
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         
         Player player = (Player) event.getWhoClicked();
-        String title = event.getView().getTitle();
-        
-        if (!title.contains("Perfil") && !title.contains("Profile")) {
+        if (!isProfileMenuTitle(event.getView().getTitle())) {
             return;
         }
         
@@ -351,6 +359,15 @@ public class ProfileGUI implements Listener {
         if (displayName.contains("Fechar")) {
             player.closeInventory();
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
+    public void onMenuInventoryDrag(InventoryDragEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) return;
+        if (!isProfileMenuTitle(event.getView().getTitle())) {
+            return;
+        }
+        event.setCancelled(true);
     }
 }
 

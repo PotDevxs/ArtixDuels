@@ -1,0 +1,28 @@
+# Loot boxes — edite na pasta do plugin após a primeira cópia.
+# rewards: lista de entradas com type (money|item), chance (0-100), e campos extras.
+
+lootboxes:
+  common:
+    name: "Caixa Comum"
+    rarity: COMMON
+    drop-chance: 100.0
+    rewards:
+      - type: money
+        chance: 100
+        amount: 50
+      - type: item
+        chance: 35
+        material: GOLD_INGOT
+        amount: 2
+  rare:
+    name: "Caixa Rara"
+    rarity: RARE
+    drop-chance: 100.0
+    rewards:
+      - type: money
+        chance: 100
+        amount: 150
+      - type: item
+        chance: 45
+        material: DIAMOND
+        amount: 1

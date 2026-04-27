@@ -1,0 +1,47 @@
+# Passe de batalha padrão — ajuste datas e recompensas na pasta do plugin.
+# start-time / end-time em milissegundos (epoch). Ex.: use um conversor online.
+
+current:
+  id: bp_1
+  name: "Passe de Batalha"
+  start-time: 0
+  end-time: 2524608000000
+  max-level: 100
+
+free-rewards:
+  "1":
+    type: money
+    amount: 25
+  "2":
+    type: money
+    amount: 35
+  "3":
+    type: money
+    amount: 50
+  "4":
+    type: money
+    amount: 60
+  "5":
+    type: item
+    material: GOLD_INGOT
+    amount: 4
+  "6":
+    type: money
+    amount: 80
+  "7":
+    type: money
+    amount: 100
+  "8":
+    type: item
+    material: DIAMOND
+    amount: 1
+  "9":
+    type: money
+    amount: 150
+  "10":
+    type: money
+    amount: 200
+
+premium-rewards: {}
+
+progress: {}

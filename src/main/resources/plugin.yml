@@ -1,4 +1,4 @@
-name: ArtixDuelsRemake
+name: ArtixDuels-Remake
 version: '${project.version}'
 description: 'ArtixDuels'
 authors: [ 'Faastyzin' ]
@@ -7,9 +7,30 @@ main: dev.artix.artixduels.ArtixDuels
 api-version: 1.13
 
 permissions:
+  artixduels.admin:
+    description: Comandos administrativos (arenas, kits, NPCs, reload, etc.)
+    default: op
+  artixduels.duel:
+    description: Usar duelos e fila
+    default: true
+  artixduels.spectate:
+    description: Espectar duelos
+    default: true
+  artixduels.stats:
+    description: Ver estatísticas
+    default: true
+  artixduels.history:
+    description: Ver histórico de duelos
+    default: true
   artixduels.theme.use:
     description: Permite usar o sistema de temas
-    default: false
+    default: true
   artixduels.theme.customize:
     description: Permite customizar temas
     default: false
+  artixduels.battlepass:
+    description: Usar comando do passe de batalha
+    default: true
+  artixduels.lootbox:
+    description: Usar comando de loot boxes
+    default: true

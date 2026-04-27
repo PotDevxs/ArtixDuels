@@ -9,8 +9,10 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -63,22 +65,22 @@ public class ProfileItemListener implements Listener {
             return;
         }
         
-        String displayName = meta.getDisplayName();
+        String plain = ChatColor.stripColor(meta.getDisplayName()).toLowerCase();
         
-        if (displayName.contains("Perfil") || displayName.contains("Profile")) {
+        if (plain.contains("perfil") || plain.contains("profile")) {
             event.setCancelled(true);
             if (profileGUI != null) {
                 profileGUI.openProfile(player);
             }
-        } else if (displayName.contains("Procurar Partida") || displayName.contains("Queue")) {
+        } else if (plain.contains("procurar partida") || plain.contains("queue")) {
             event.setCancelled(true);
             if (duelModeSelectionGUI != null) {
                 duelModeSelectionGUI.openQueueMenu(player);
             }
-        } else if (displayName.contains("Desafiar") || displayName.contains("Challenge")) {
+        } else if (plain.contains("desafiar") || plain.contains("challenge")) {
             event.setCancelled(true);
             player.sendMessage("§7Clique em um jogador para desafiar!");
-        } else if (displayName.contains("Sair da Fila") || displayName.contains("Leave Queue")) {
+        } else if (plain.contains("sair da fila") || plain.contains("leave queue")) {
             event.setCancelled(true);
             if (duelManager != null) {
                 duelManager.removeFromMatchmaking(player);
@@ -220,10 +222,11 @@ public class ProfileItemListener implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta == null || !meta.hasDisplayName()) return false;
         String name = ChatColor.stripColor(meta.getDisplayName());
-        return name.contains("Procurar Partida") || name.contains("Queue")
-            || name.contains("Perfil") || name.contains("Profile")
-            || name.contains("Desafiar") || name.contains("Challenge")
-            || name.contains("Sair da Fila") || name.contains("Leave Queue");
+        String n = name.toLowerCase();
+        return n.contains("procurar partida") || n.contains("queue")
+            || n.contains("perfil") || n.contains("profile")
+            || n.contains("desafiar") || n.contains("challenge")
+            || n.contains("sair da fila") || n.contains("leave queue");
     }
 
     @EventHandler
@@ -233,22 +236,53 @@ public class ProfileItemListener implements Listener {
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = false)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
+        Player p = (Player) event.getWhoClicked();
+        int topSize = event.getView().getTopInventory().getSize();
+        int raw = event.getRawSlot();
+
+        // Tecla numérica: não trocar item do menu com a hotbar 0, 4, 8 se forem itens fixos
+        if (event.getClick() == ClickType.NUMBER_KEY) {
+            int hotbar = event.getHotbarButton();
+            if (hotbar == QUEUE_ITEM_SLOT || hotbar == PROFILE_ITEM_SLOT || hotbar == CHALLENGE_ITEM_SLOT) {
+                ItemStack inHotbar = p.getInventory().getItem(hotbar);
+                if (isFixedMenuItem(inHotbar)) {
+                    event.setCancelled(true);
+                }
+            }
+        }
+
+        // Inventário de cima (menu virtual): o listener da GUI trata o cancel — não interferir
+        if (topSize > 0 && raw >= 0 && raw < topSize) {
+            return;
+        }
+
         if (isFixedMenuItem(event.getCurrentItem()) || isFixedMenuItem(event.getCursor())) {
             event.setCancelled(true);
         }
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.LOW, ignoreCancelled = false)
     public void onInventoryDrag(InventoryDragEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
+        int topSize = event.getView().getTopInventory().getSize();
+        boolean hasBottomSlot = false;
+        for (int raw : event.getRawSlots()) {
+            if (raw >= topSize) {
+                hasBottomSlot = true;
+                break;
+            }
+        }
+        // Só o menu: arrastos no chest são tratados pelos Listeners de GUI
+        if (!hasBottomSlot) {
+            return;
+        }
         if (isFixedMenuItem(event.getOldCursor())) {
             event.setCancelled(true);
             return;
         }
-        int topSize = event.getView().getTopInventory().getSize();
         for (int rawSlot : event.getRawSlots()) {
             if (rawSlot >= topSize) {
                 int bottomSlot = rawSlot - topSize;

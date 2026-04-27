@@ -9,8 +9,10 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -115,11 +117,12 @@ public class ArenaEditorGUI implements Listener {
      * Abre o menu de templates.
      */
     public void openTemplateMenu(Player player) {
-        String title = ChatColor.translateAlternateColorCodes('&', "&6&lTEMPLATES");
-        if (title.length() > 32) {
-            title = title.substring(0, 32);
+        // Título distinto do editor de kits (ambos usavam "TEMPLATES")
+        String menuTitle = ChatColor.translateAlternateColorCodes('&', "&6&lTemplates &7Arenas");
+        if (menuTitle.length() > 32) {
+            menuTitle = menuTitle.substring(0, 32);
         }
-        Inventory gui = Bukkit.createInventory(null, 27, title);
+        Inventory gui = Bukkit.createInventory(null, 27, menuTitle);
 
         dev.artix.artixduels.utils.MenuUtils.fillMenuBorders(gui);
 
@@ -143,13 +146,28 @@ public class ArenaEditorGUI implements Listener {
         player.openInventory(gui);
     }
 
-    @EventHandler
+    /**
+     * Inventários do editor de arenas (evita confundir com o menu do KitEditor).
+     */
+    public static boolean isArenaEditorInventoryTitle(String viewTitle) {
+        String t = ChatColor.stripColor(viewTitle).toLowerCase();
+        if (t.contains("favoritos")) {
+            return false;
+        }
+        if (t.contains("kit") && (t.contains("editor") || t.contains("selecionar") || t.contains("template"))) {
+            return false;
+        }
+        return (t.contains("editor") && t.contains("arena"))
+            || (t.contains("selecionar") && t.contains("arena"))
+            || (t.contains("template") && t.contains("arena"));
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
-        String title = event.getView().getTitle();
-
-        if (!title.contains("EDITOR") && !title.contains("SELECIONAR") && !title.contains("TEMPLATES")) {
+        String titleRaw = event.getView().getTitle();
+        if (!isArenaEditorInventoryTitle(titleRaw)) {
             return;
         }
 
@@ -164,8 +182,9 @@ public class ArenaEditorGUI implements Listener {
         if (meta == null || !meta.hasDisplayName()) return;
 
         String displayName = ChatColor.stripColor(meta.getDisplayName());
+        String t = ChatColor.stripColor(titleRaw).toLowerCase();
 
-        if (title.contains("EDITOR")) {
+        if (t.contains("editor") && t.contains("arena")) {
             if (displayName.contains("FECHAR")) {
                 player.closeInventory();
             } else if (displayName.contains("Criar Nova")) {
@@ -181,13 +200,13 @@ public class ArenaEditorGUI implements Listener {
             } else if (displayName.contains("Exportar")) {
                 openArenaSelectionMenu(player);
             }
-        } else if (title.contains("SELECIONAR")) {
+        } else if (t.contains("selecionar") && t.contains("arena")) {
             if (displayName.contains("VOLTAR")) {
                 openMainMenu(player);
             } else {
                 String arenaName = getArenaNameFromLore(meta.getLore());
                 if (arenaName != null) {
-                    if (title.contains("Exportar")) {
+                    if (t.contains("exportar")) {
                         player.closeInventory();
                         player.sendMessage("§7Use §e/arenaeditor export <arena> §7para exportar.");
                     } else {
@@ -196,7 +215,7 @@ public class ArenaEditorGUI implements Listener {
                     }
                 }
             }
-        } else if (title.contains("TEMPLATES")) {
+        } else if (t.contains("template") && t.contains("arena")) {
             if (displayName.contains("VOLTAR")) {
                 openMainMenu(player);
             } else {
@@ -207,6 +226,15 @@ public class ArenaEditorGUI implements Listener {
                 }
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
+    public void onMenuInventoryDrag(InventoryDragEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) return;
+        if (!isArenaEditorInventoryTitle(event.getView().getTitle())) {
+            return;
+        }
+        event.setCancelled(true);
     }
 
     @EventHandler

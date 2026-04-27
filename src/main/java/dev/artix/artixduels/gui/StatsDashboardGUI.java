@@ -1,7 +1,9 @@
 package dev.artix.artixduels.gui;
 
+import dev.artix.artixduels.database.IDuelHistoryDAO;
 import dev.artix.artixduels.managers.RankingManager;
 import dev.artix.artixduels.managers.StatsManager;
+import dev.artix.artixduels.models.DuelHistory;
 import dev.artix.artixduels.models.DuelMode;
 import dev.artix.artixduels.models.PlayerStats;
 import org.bukkit.Bukkit;
@@ -15,19 +17,26 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Dashboard avançado de estatísticas com gráficos e comparações.
  */
 public class StatsDashboardGUI implements Listener {
+    private static final String MODE_STATS_TITLE = ChatColor.translateAlternateColorCodes('&', "&6&lModos de duelo");
+
     private final StatsManager statsManager;
     private final RankingManager rankingManager;
+    private final IDuelHistoryDAO historyDAO;
 
-    public StatsDashboardGUI(StatsManager statsManager, RankingManager rankingManager) {
+    public StatsDashboardGUI(StatsManager statsManager, RankingManager rankingManager, IDuelHistoryDAO historyDAO) {
         this.statsManager = statsManager;
         this.rankingManager = rankingManager;
+        this.historyDAO = historyDAO;
     }
 
     /**
@@ -184,7 +193,7 @@ public class StatsDashboardGUI implements Listener {
     }
 
     /**
-     * Abre o menu de timeline de duelos.
+     * Abre o menu de timeline de duelos (histórico persistido).
      */
     public void openTimelineMenu(Player player) {
         String title = ChatColor.translateAlternateColorCodes('&', "&6&lTIMELINE");
@@ -195,25 +204,100 @@ public class StatsDashboardGUI implements Listener {
 
         dev.artix.artixduels.utils.MenuUtils.fillMenuBorders(gui);
 
-        // TODO: Carregar histórico de duelos do banco de dados
-        // Por enquanto, mostra uma mensagem
-        ItemStack infoItem = new ItemStack(Material.BOOK);
-        ItemMeta infoMeta = infoItem.getItemMeta();
-        infoMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&7Timeline de Duelos"));
-        List<String> lore = new ArrayList<>();
-        lore.add("&8&m                              ");
-        lore.add("&7Em breve: Timeline completa");
-        lore.add("&7de seus duelos recentes");
-        lore.add("&8&m                              ");
-        List<String> coloredLore = new ArrayList<>();
-        for (String line : lore) {
-            coloredLore.add(ChatColor.translateAlternateColorCodes('&', line));
-        }
-        infoMeta.setLore(coloredLore);
-        infoItem.setItemMeta(infoMeta);
-        gui.setItem(22, infoItem);
+        List<DuelHistory> history = historyDAO != null
+            ? historyDAO.getPlayerHistory(player.getUniqueId(), 28)
+            : new ArrayList<DuelHistory>();
+        SimpleDateFormat fmt = new SimpleDateFormat("dd/MM HH:mm", new Locale("pt", "BR"));
 
-        // Item: Voltar
+        if (history.isEmpty()) {
+            ItemStack infoItem = new ItemStack(Material.BOOK);
+            ItemMeta infoMeta = infoItem.getItemMeta();
+            infoMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&7Nenhum duelo registrado"));
+            List<String> lore = new ArrayList<>();
+            lore.add("&8&m                              ");
+            lore.add("&7Seu histórico aparecerá aqui");
+            lore.add("&7após duelos finalizados.");
+            lore.add("&8&m                              ");
+            List<String> coloredLore = new ArrayList<>();
+            for (String line : lore) {
+                coloredLore.add(ChatColor.translateAlternateColorCodes('&', line));
+            }
+            infoMeta.setLore(coloredLore);
+            infoItem.setItemMeta(infoMeta);
+            gui.setItem(22, infoItem);
+        } else {
+            int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, 42, 43};
+            for (int i = 0; i < history.size() && i < slots.length; i++) {
+                DuelHistory h = history.get(i);
+                ItemStack paper = new ItemStack(Material.PAPER);
+                ItemMeta meta = paper.getItemMeta();
+                boolean won = h.getWinnerId() != null && h.getWinnerId().equals(player.getUniqueId());
+                String vs = h.getPlayer1Id().equals(player.getUniqueId()) ? h.getPlayer2Name() : h.getPlayer1Name();
+                meta.setDisplayName(ChatColor.translateAlternateColorCodes('&',
+                    (won ? "&aVitória &7vs &f" : "&cDerrota &7vs &f") + vs));
+                List<String> lore = new ArrayList<>();
+                lore.add("&8&m                              ");
+                lore.add("&7Data: &f" + fmt.format(new Date(h.getTimestamp())));
+                lore.add("&7Kit: &e" + (h.getKitName() != null ? h.getKitName() : "-"));
+                lore.add("&7Arena: &e" + (h.getArenaName() != null ? h.getArenaName() : "-"));
+                lore.add("&7Duração: &b" + (h.getDuration() / 1000) + "s");
+                lore.add("&8&m                              ");
+                List<String> coloredLore = new ArrayList<>();
+                for (String line : lore) {
+                    coloredLore.add(ChatColor.translateAlternateColorCodes('&', line));
+                }
+                meta.setLore(coloredLore);
+                paper.setItemMeta(meta);
+                gui.setItem(slots[i], paper);
+            }
+        }
+
+        ItemStack backItem = new ItemStack(Material.PAPER);
+        ItemMeta backMeta = backItem.getItemMeta();
+        backMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&e&lVOLTAR"));
+        backItem.setItemMeta(backMeta);
+        gui.setItem(49, backItem);
+
+        player.openInventory(gui);
+    }
+
+    /**
+     * Abre estatísticas detalhadas por modo de duelo.
+     */
+    public void openModeStatsMenu(Player player) {
+        String title = MODE_STATS_TITLE;
+        String safeTitle = title.length() > 32 ? title.substring(0, 32) : title;
+        Inventory gui = Bukkit.createInventory(null, 54, safeTitle);
+
+        dev.artix.artixduels.utils.MenuUtils.fillMenuBorders(gui);
+
+        PlayerStats stats = statsManager.getPlayerStats(player);
+        int[] slots = {10, 11, 12, 13, 14, 15, 16, 19, 20, 21, 22, 23, 24, 25, 28, 29, 30, 31, 32, 33, 34};
+        DuelMode[] modes = DuelMode.values();
+        for (int i = 0; i < modes.length && i < slots.length; i++) {
+            DuelMode mode = modes[i];
+            PlayerStats.ModeStats ms = stats.getModeStats(mode);
+            ItemStack icon = new ItemStack(Material.DIAMOND_SWORD);
+            ItemMeta meta = icon.getItemMeta();
+            meta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&6&l" + mode.getDisplayName()));
+            List<String> lore = new ArrayList<>();
+            lore.add("&8&m                              ");
+            lore.add("&7Vitórias: &a" + ms.getWins());
+            lore.add("&7Derrotas: &c" + ms.getLosses());
+            lore.add("&7Kills: &e" + ms.getKills());
+            int played = ms.getWins() + ms.getLosses();
+            double wr = played > 0 ? (100.0 * ms.getWins() / played) : 0;
+            lore.add("&7Winrate: &b" + String.format(Locale.US, "%.1f", wr) + "%");
+            lore.add("&8&m                              ");
+            List<String> coloredLore = new ArrayList<>();
+            for (String line : lore) {
+                coloredLore.add(ChatColor.translateAlternateColorCodes('&', line));
+            }
+            meta.setLore(coloredLore);
+            icon.setItemMeta(meta);
+            gui.setItem(slots[i], icon);
+        }
+
         ItemStack backItem = new ItemStack(Material.PAPER);
         ItemMeta backMeta = backItem.getItemMeta();
         backMeta.setDisplayName(ChatColor.translateAlternateColorCodes('&', "&e&lVOLTAR"));
@@ -315,7 +399,8 @@ public class StatsDashboardGUI implements Listener {
 
         if (!title.contains("DASHBOARD") && !title.contains("ESTATÍSTICAS") && 
             !title.contains("COMPARAÇÃO") && !title.contains("TIMELINE") && 
-            !title.contains("PROGRESSO") && !title.contains("GRÁFICOS")) {
+            !title.contains("PROGRESSO") && !title.contains("GRÁFICOS") &&
+            !title.contains("Modos de duelo")) {
             return;
         }
 
@@ -337,8 +422,7 @@ public class StatsDashboardGUI implements Listener {
             } else if (displayName.contains("GERAIS") || displayName.contains("ESTATÍSTICAS")) {
                 openGeneralStats(player);
             } else if (displayName.contains("MODO")) {
-                // TODO: Abrir menu de estatísticas por modo
-                player.sendMessage("§7Em breve: Estatísticas por modo");
+                openModeStatsMenu(player);
             } else if (displayName.contains("COMPARAÇÃO")) {
                 openCompareMenu(player);
             } else if (displayName.contains("TIMELINE")) {

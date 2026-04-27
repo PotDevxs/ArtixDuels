@@ -54,6 +54,8 @@ public final class ArtixDuels extends JavaPlugin {
     private dev.artix.artixduels.managers.LanguageManager languageManager;
     private dev.artix.artixduels.managers.ArenaEditor arenaEditor;
     private dev.artix.artixduels.managers.KitEditor kitEditor;
+    private dev.artix.artixduels.gui.ArenaEditorGUI arenaEditorGUI;
+    private dev.artix.artixduels.gui.KitEditorGUI kitEditorGUI;
     private dev.artix.artixduels.managers.ThemeManager themeManager;
     private dev.artix.artixduels.managers.AchievementManager achievementManager;
     private dev.artix.artixduels.managers.TitleManager titleManager;
@@ -100,6 +102,15 @@ public final class ArtixDuels extends JavaPlugin {
         loadMessagesConfig();
         loadKitsConfig();
         loadMenusConfig();
+        if (!new File(getDataFolder(), "achievements.yml").exists()) {
+            saveResource("achievements.yml", false);
+        }
+        if (!new File(getDataFolder(), "lootboxes.yml").exists()) {
+            saveResource("lootboxes.yml", false);
+        }
+        if (!new File(getDataFolder(), "battlepass.yml").exists()) {
+            saveResource("battlepass.yml", false);
+        }
 
         databaseManager = new DatabaseManager(this);
         databaseManager.connect();
@@ -113,6 +124,15 @@ public final class ArtixDuels extends JavaPlugin {
         kitEditor = new dev.artix.artixduels.managers.KitEditor(this, kitManager);
         themeManager = new dev.artix.artixduels.managers.ThemeManager(this);
         themeManager.loadCustomThemes();
+        arenaManager = new ArenaManager(getConfig(), new File(getDataFolder(), "config.yml"));
+        arenaEditor = new dev.artix.artixduels.managers.ArenaEditor(this, arenaManager);
+        rewardManager = new RewardManager(this, getConfig());
+        betManager = new BetManager(this, getConfig());
+        cooldownManager = new CooldownManager(getConfig());
+        spectatorManager = new SpectatorManager(arenaManager);
+        duelManager = new DuelManager(this, kitManager, arenaManager, statsManager,
+                null, rewardManager, betManager, cooldownManager, spectatorManager, historyDAO);
+        notificationManager = new dev.artix.artixduels.managers.NotificationManager(this, duelManager);
         achievementManager = new dev.artix.artixduels.managers.AchievementManager(this, statsManager, rewardManager, notificationManager);
         titleManager = new dev.artix.artixduels.managers.TitleManager(this, statsManager, achievementManager);
         seasonManager = new dev.artix.artixduels.managers.SeasonManager(this, statsManager, rewardManager);
@@ -122,24 +142,9 @@ public final class ArtixDuels extends JavaPlugin {
         battlePassManager = new dev.artix.artixduels.managers.BattlePassManager(this, rewardManager);
         eventManager = new dev.artix.artixduels.managers.EventManager(this, notificationManager);
         festivalManager = new dev.artix.artixduels.managers.FestivalManager(this, rewardManager);
-        arenaManager = new ArenaManager(getConfig(), new File(getDataFolder(), "config.yml"));
-        arenaEditor = new dev.artix.artixduels.managers.ArenaEditor(this, arenaManager);
-        
-        rewardManager = new RewardManager(this, getConfig());
-        betManager = new BetManager(this, getConfig());
-        cooldownManager = new CooldownManager(getConfig());
-        spectatorManager = new SpectatorManager(arenaManager);
-        
-        duelManager = new DuelManager(this, kitManager, arenaManager, statsManager,
-                null, rewardManager, betManager, cooldownManager, spectatorManager, historyDAO);
-        
-        // Verificar e inicializar integrações antes de criar PlaceholderManager
         integrationManager = new dev.artix.artixduels.utils.IntegrationManager(this);
-        
-        // Inicializar sistemas de ranking, combate e notificações
         rankingManager = new dev.artix.artixduels.managers.RankingManager(this, statsDAO);
         combatAnalyzer = new dev.artix.artixduels.managers.CombatAnalyzer();
-        notificationManager = new dev.artix.artixduels.managers.NotificationManager(this, duelManager);
         languageManager = new dev.artix.artixduels.managers.LanguageManager(this);
         languageManager.loadPlayerLanguages();
         challengeManager = new dev.artix.artixduels.managers.ChallengeManager(this, statsManager, rewardManager);
@@ -149,8 +154,7 @@ public final class ArtixDuels extends JavaPlugin {
         trainingManager = new dev.artix.artixduels.managers.TrainingManager(this, kitManager, arenaManager);
         antiCheatManager = new dev.artix.artixduels.managers.AntiCheatManager(this, getConfig());
         reportManager = new dev.artix.artixduels.managers.ReportManager(this);
-        
-        // Integrar sistemas no DuelManager
+
         duelManager.setCombatAnalyzer(combatAnalyzer);
         duelManager.setNotificationManager(notificationManager);
         duelManager.setChallengeManager(challengeManager);
@@ -191,7 +195,7 @@ public final class ArtixDuels extends JavaPlugin {
         trainingGUI = new dev.artix.artixduels.gui.TrainingGUI(trainingManager);
         getServer().getPluginManager().registerEvents(trainingGUI, this);
         
-        statsDashboardGUI = new dev.artix.artixduels.gui.StatsDashboardGUI(statsManager, rankingManager);
+        statsDashboardGUI = new dev.artix.artixduels.gui.StatsDashboardGUI(statsManager, rankingManager, historyDAO);
         getServer().getPluginManager().registerEvents(statsDashboardGUI, this);
         
         dev.artix.artixduels.gui.NotificationSettingsGUI notificationSettingsGUI = 
@@ -240,12 +244,12 @@ public final class ArtixDuels extends JavaPlugin {
         hologramSystemManager.loadHolograms();
         hologramSystemManager.startUpdateTask();
 
+        arenaEditorGUI = new dev.artix.artixduels.gui.ArenaEditorGUI(arenaEditor, arenaManager);
+        getServer().getPluginManager().registerEvents(arenaEditorGUI, this);
+        kitEditorGUI = new dev.artix.artixduels.gui.KitEditorGUI(kitEditor, kitManager);
+        getServer().getPluginManager().registerEvents(kitEditorGUI, this);
+
         startTablistUpdateTask();
-
-        // Verificar e inicializar integrações
-        integrationManager = new dev.artix.artixduels.utils.IntegrationManager(this);
-
-        // Registrar comandos programaticamente
         CommandRegistry commandRegistry = new CommandRegistry(this);
         commandRegistry.registerAllCommands();
 
@@ -274,8 +278,6 @@ public final class ArtixDuels extends JavaPlugin {
     private void startTablistUpdateTask() {
         if (tablistManager == null || !tablistManager.isEnabled()) return;
 
-        // Executar de forma síncrona para evitar problemas com reflection
-        // O intervalo no config está em segundos, converter para ticks (1 segundo = 20 ticks)
         long intervalTicks = tablistManager.getUpdateInterval() * 20L;
         getServer().getScheduler().runTaskTimer(this, () -> {
             tablistManager.updateAllTablists();
@@ -305,187 +307,147 @@ public final class ArtixDuels extends JavaPlugin {
     public DatabaseManager getDatabaseManager() {
         return databaseManager;
     }
-
     public StatsManager getStatsManager() {
         return statsManager;
     }
-
     public KitManager getKitManager() {
         return kitManager;
     }
-
     public ArenaManager getArenaManager() {
         return arenaManager;
     }
-
     public DuelManager getDuelManager() {
         return duelManager;
     }
-
     public ScoreboardManager getScoreboardManager() {
         return scoreboardManager;
     }
-
     public ProfileItemListener getProfileItemListener() {
         return profileItemListener;
     }
-
     public HologramSystemManager getHologramSystemManager() {
         return hologramSystemManager;
     }
-
     public DuelNPC getDuelNPC() {
         return duelNPC;
     }
-
     public DuelModeSelectionGUI getDuelModeSelectionGUI() {
         return duelModeSelectionGUI;
     }
-
     public ScoreboardModeSelectionGUI getScoreboardModeSelectionGUI() {
         return scoreboardModeSelectionGUI;
     }
-
     public ConfigGUI getConfigGUI() {
         return configGUI;
     }
-
     public SpectatorManager getSpectatorManager() {
         return spectatorManager;
     }
-
     public IDuelHistoryDAO getHistoryDAO() {
         return historyDAO;
     }
-
     public MenuManager getMenuManager() {
         return menuManager;
     }
-
     public dev.artix.artixduels.utils.IntegrationManager getIntegrationManager() {
         return integrationManager;
     }
-
     public dev.artix.artixduels.managers.RankingManager getRankingManager() {
         return rankingManager;
     }
-
     public dev.artix.artixduels.managers.CombatAnalyzer getCombatAnalyzer() {
         return combatAnalyzer;
     }
-
     public dev.artix.artixduels.managers.NotificationManager getNotificationManager() {
         return notificationManager;
     }
-
     public dev.artix.artixduels.gui.RankingGUI getRankingGUI() {
         return rankingGUI;
     }
-
     public dev.artix.artixduels.managers.ChallengeManager getChallengeManager() {
         return challengeManager;
     }
-
     public dev.artix.artixduels.gui.ChallengeGUI getChallengeGUI() {
         return challengeGUI;
     }
-
     public dev.artix.artixduels.managers.CosmeticManager getCosmeticManager() {
         return cosmeticManager;
     }
-
     public dev.artix.artixduels.gui.CosmeticGUI getCosmeticGUI() {
         return cosmeticGUI;
     }
-
     public dev.artix.artixduels.managers.TournamentManager getTournamentManager() {
         return tournamentManager;
     }
-
     public dev.artix.artixduels.gui.TournamentGUI getTournamentGUI() {
         return tournamentGUI;
     }
-
     public dev.artix.artixduels.managers.ReplayManager getReplayManager() {
         return replayManager;
     }
-
     public dev.artix.artixduels.gui.ReplayGUI getReplayGUI() {
         return replayGUI;
     }
-
     public dev.artix.artixduels.managers.TrainingManager getTrainingManager() {
         return trainingManager;
     }
-
     public dev.artix.artixduels.gui.TrainingGUI getTrainingGUI() {
         return trainingGUI;
     }
-
     public dev.artix.artixduels.gui.StatsDashboardGUI getStatsDashboardGUI() {
         return statsDashboardGUI;
     }
-
     public dev.artix.artixduels.managers.LanguageManager getLanguageManager() {
         return languageManager;
     }
-
     public dev.artix.artixduels.managers.ArenaEditor getArenaEditor() {
         return arenaEditor;
     }
-
     public dev.artix.artixduels.managers.KitEditor getKitEditor() {
         return kitEditor;
     }
-
+    public dev.artix.artixduels.gui.ArenaEditorGUI getArenaEditorGUI() {
+        return arenaEditorGUI;
+    }
+    public dev.artix.artixduels.gui.KitEditorGUI getKitEditorGUI() {
+        return kitEditorGUI;
+    }
     public dev.artix.artixduels.managers.ThemeManager getThemeManager() {
         return themeManager;
     }
-
     public dev.artix.artixduels.managers.AchievementManager getAchievementManager() {
         return achievementManager;
     }
-
     public dev.artix.artixduels.managers.TitleManager getTitleManager() {
         return titleManager;
     }
-
     public dev.artix.artixduels.managers.SeasonManager getSeasonManager() {
         return seasonManager;
     }
-
     public dev.artix.artixduels.managers.QualificationManager getQualificationManager() {
         return qualificationManager;
     }
-
     public dev.artix.artixduels.managers.MetricsManager getMetricsManager() {
         return metricsManager;
     }
-
     public dev.artix.artixduels.managers.LootBoxManager getLootBoxManager() {
         return lootBoxManager;
     }
-
     public dev.artix.artixduels.managers.BattlePassManager getBattlePassManager() {
         return battlePassManager;
     }
-
     public dev.artix.artixduels.managers.EventManager getEventManager() {
         return eventManager;
     }
-
     public dev.artix.artixduels.managers.FestivalManager getFestivalManager() {
         return festivalManager;
     }
-
     public dev.artix.artixduels.managers.AntiCheatManager getAntiCheatManager() {
         return antiCheatManager;
     }
-
     public dev.artix.artixduels.managers.ReportManager getReportManager() {
         return reportManager;
     }
-
     public RewardManager getRewardManager() {
         return rewardManager;
     }
@@ -677,13 +639,11 @@ public final class ArtixDuels extends JavaPlugin {
         reloadKitsConfig();
         reloadTablistConfig();
         reloadMenuConfig();
-        
-        // Recarregar verificações de integrações
+
         if (integrationManager != null) {
             integrationManager.reload();
         }
-        
-        // Recarregar anti-cheat e relatórios
+
         if (antiCheatManager != null) {
             antiCheatManager.reloadConfig(getConfig());
         }

@@ -1,0 +1,59 @@
+# Conquistas padrão ArtixDuels (pode editar após a primeira cópia na pasta do plugin)
+
+achievements:
+  first_win:
+    name: "Primeira Vitória"
+    description: "Ganhe seu primeiro duelo"
+    category: "Vitórias"
+    rarity: "COMMON"
+    target-value: 1
+    target-type: "wins"
+    icon: "STAR"
+  win_10:
+    name: "Vencedor"
+    description: "Ganhe 10 duelos"
+    category: "Vitórias"
+    rarity: "COMMON"
+    target-value: 10
+    target-type: "wins"
+    icon: "DIAMOND"
+  win_100:
+    name: "Mestre dos Duelos"
+    description: "Ganhe 100 duelos"
+    category: "Vitórias"
+    rarity: "RARE"
+    target-value: 100
+    target-type: "wins"
+    icon: "DIAMOND_SWORD"
+  elo_1500:
+    name: "Competitivo"
+    description: "Alcance 1500 de ELO"
+    category: "ELO"
+    rarity: "RARE"
+    target-value: 1500
+    target-type: "elo"
+    icon: "GOLD_INGOT"
+  elo_2000:
+    name: "Elite"
+    description: "Alcance 2000 de ELO"
+    category: "ELO"
+    rarity: "EPIC"
+    target-value: 2000
+    target-type: "elo"
+    icon: "EMERALD"
+  streak_5:
+    name: "Em Chamas"
+    description: "Alcance uma sequência de 5 vitórias"
+    category: "Sequências"
+    rarity: "COMMON"
+    target-value: 5
+    target-type: "streak"
+    icon: "BLAZE_POWDER"
+  streak_10:
+    name: "Invencível"
+    description: "Alcance uma sequência de 10 vitórias"
+    category: "Sequências"
+    rarity: "RARE"
+    target-value: 10
+    target-type: "streak"
+    icon: "FIREBALL"

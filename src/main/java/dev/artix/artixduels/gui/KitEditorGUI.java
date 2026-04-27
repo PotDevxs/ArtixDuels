@@ -9,8 +9,10 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -120,7 +122,7 @@ public class KitEditorGUI implements Listener {
      * Abre o menu de templates.
      */
     public void openTemplateMenu(Player player) {
-        String title = ChatColor.translateAlternateColorCodes('&', "&6&lTEMPLATES");
+        String title = ChatColor.translateAlternateColorCodes('&', "&6&lTemplates &7Kits");
         if (title.length() > 32) {
             title = title.substring(0, 32);
         }
@@ -183,14 +185,25 @@ public class KitEditorGUI implements Listener {
         player.openInventory(gui);
     }
 
-    @EventHandler
+    private static boolean isKitEditorInventoryTitle(String viewTitle) {
+        if (ArenaEditorGUI.isArenaEditorInventoryTitle(viewTitle)) {
+            return false;
+        }
+        String t = ChatColor.stripColor(viewTitle).toLowerCase();
+        if (t.contains("favoritos")) {
+            return true;
+        }
+        return t.contains("kit")
+            && (t.contains("editor") || t.contains("selecionar") || t.contains("template") || t.contains("editar") || t.contains("exportar"));
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         Player player = (Player) event.getWhoClicked();
         String title = event.getView().getTitle();
 
-        if (!title.contains("EDITOR") && !title.contains("EDITAR") && !title.contains("SELECIONAR") 
-            && !title.contains("TEMPLATES") && !title.contains("FAVORITOS")) {
+        if (!isKitEditorInventoryTitle(title)) {
             return;
         }
 
@@ -205,8 +218,9 @@ public class KitEditorGUI implements Listener {
         if (meta == null || !meta.hasDisplayName()) return;
 
         String displayName = ChatColor.stripColor(meta.getDisplayName());
+        String t = ChatColor.stripColor(title).toLowerCase();
 
-        if (title.contains("EDITOR")) {
+        if (t.contains("editor") && t.contains("kit")) {
             if (displayName.contains("FECHAR")) {
                 player.closeInventory();
             } else if (displayName.contains("Criar Novo")) {
@@ -224,16 +238,16 @@ public class KitEditorGUI implements Listener {
             } else if (displayName.contains("Exportar")) {
                 openKitSelectionMenu(player, false);
             }
-        } else if (title.contains("EDITAR") || title.contains("SELECIONAR")) {
+        } else if (t.contains("editar") && t.contains("kit") || t.contains("selecionar") && t.contains("kit")) {
             if (displayName.contains("VOLTAR")) {
                 openMainMenu(player);
             } else {
                 String kitName = getKitNameFromLore(meta.getLore());
                 if (kitName != null) {
-                    if (title.contains("Exportar")) {
+                    if (t.contains("exportar") && t.contains("selecionar")) {
                         player.closeInventory();
                         player.sendMessage("§7Use §e/kiteditor export <kit> §7para exportar.");
-                    } else if (title.contains("EDITAR")) {
+                    } else if (t.contains("editar")) {
                         kitEditor.startEditSession(player, kitName);
                         player.closeInventory();
                     } else {
@@ -242,7 +256,7 @@ public class KitEditorGUI implements Listener {
                     }
                 }
             }
-        } else if (title.contains("TEMPLATES")) {
+        } else if (t.contains("template") && t.contains("kit")) {
             if (displayName.contains("VOLTAR")) {
                 openMainMenu(player);
             } else {
@@ -252,7 +266,7 @@ public class KitEditorGUI implements Listener {
                     player.sendMessage("§7Use §e/kiteditor template <template> <nome> §7para criar a partir do template.");
                 }
             }
-        } else if (title.contains("FAVORITOS")) {
+        } else if (t.contains("favoritos")) {
             if (displayName.contains("VOLTAR")) {
                 openMainMenu(player);
             } else {
@@ -269,6 +283,15 @@ public class KitEditorGUI implements Listener {
                 }
             }
         }
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
+    public void onMenuInventoryDrag(InventoryDragEvent event) {
+        if (!(event.getWhoClicked() instanceof Player)) return;
+        if (!isKitEditorInventoryTitle(event.getView().getTitle())) {
+            return;
+        }
+        event.setCancelled(true);
     }
 
     private String getKitNameFromLore(List<String> lore) {

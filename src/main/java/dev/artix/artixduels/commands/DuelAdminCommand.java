@@ -10,6 +10,7 @@ import dev.artix.artixduels.managers.StatsManager;
 import dev.artix.artixduels.models.Arena;
 import dev.artix.artixduels.models.Kit;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 
 import org.bukkit.Location;
 import org.bukkit.command.Command;
@@ -128,6 +129,16 @@ public class DuelAdminCommand implements CommandExecutor {
                 handleResetStats(args[1]);
                 break;
 
+            case "givebox":
+            case "darcaixa":
+                if (args.length < 3) {
+                    sender.sendMessage("§cUso: /dueladmin givebox <jogador> <id>");
+                    sender.sendMessage("§7IDs: §f" + String.join(", ", plugin.getLootBoxManager().getRegisteredLootBoxIds()));
+                    return true;
+                }
+                handleGiveLootBox(sender, args[1], args[2]);
+                break;
+
             default:
                 sendHelp(sender);
                 break;
@@ -145,6 +156,7 @@ public class DuelAdminCommand implements CommandExecutor {
         sender.sendMessage("§e/dueladmin setspawn <arena> <1|2|spectator> §7- Define spawn de uma arena");
         sender.sendMessage("§e/dueladmin forcestop <jogador> §7- Força parar um duelo");
         sender.sendMessage("§e/dueladmin resetstats <jogador> §7- Reseta estatísticas de um jogador");
+        sender.sendMessage("§e/dueladmin givebox <jogador> <id> §7- Dá uma loot box (ex.: common, rare)");
     }
 
     private java.util.Map<String, String> createMap(String... pairs) {
@@ -237,6 +249,29 @@ public class DuelAdminCommand implements CommandExecutor {
 
         statsManager.removeCachedStats(player.getUniqueId());
         Bukkit.getConsoleSender().sendMessage("§aEstatísticas de §e" + playerName + " §aresetadas!");
+    }
+
+    @SuppressWarnings("deprecation")
+    private void handleGiveLootBox(CommandSender sender, String playerName, String boxId) {
+        if (!plugin.getLootBoxManager().getRegisteredLootBoxIds().contains(boxId)) {
+            sender.sendMessage("§cLoot box desconhecida: §e" + boxId);
+            sender.sendMessage("§7Disponíveis: §f" + String.join(", ", plugin.getLootBoxManager().getRegisteredLootBoxIds()));
+            return;
+        }
+
+        OfflinePlayer target = Bukkit.getOfflinePlayer(playerName);
+        if (!target.hasPlayedBefore() && !target.isOnline()) {
+            sender.sendMessage("§cJogador não encontrado ou nunca entrou no servidor.");
+            return;
+        }
+
+        plugin.getLootBoxManager().giveLootBox(target.getUniqueId(), boxId);
+
+        Player online = target.getPlayer();
+        if (online != null && online.isOnline()) {
+            online.sendMessage("§6§l[Loot Box] §aVocê recebeu: §e" + boxId);
+        }
+        sender.sendMessage("§aLoot box §e" + boxId + " §adada para §f" + playerName + "§a.");
     }
 }
 

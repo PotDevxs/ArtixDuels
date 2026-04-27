@@ -11,7 +11,6 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,39 +35,30 @@ public class HologramManager {
         this.hologramLines = new HashMap<>();
         this.hologramModes = new HashMap<>();
     }
-
     public void loadHolograms(FileConfiguration config, String npcName, Location npcLocation, DuelMode mode) {
         ConfigurationSection npcSection = config.getConfigurationSection("npcs." + npcName);
         if (npcSection == null) return;
-
         ConfigurationSection hologramSection = npcSection.getConfigurationSection("hologram");
         if (hologramSection == null) return;
-
         boolean enabled = hologramSection.getBoolean("enabled", false);
         if (!enabled) return;
-
         double height = hologramSection.getDouble("height", 2.5);
         double offsetX = hologramSection.getDouble("offset-x", 0.0);
         double offsetZ = hologramSection.getDouble("offset-z", 0.0);
         List<String> lines = hologramSection.getStringList("lines");
-
         if (lines.isEmpty()) {
             lines = getDefaultLines();
         }
-
         hologramLines.put(npcName, lines);
         hologramModes.put(npcName, mode);
         createHologram(npcName, npcLocation, height, offsetX, offsetZ, lines);
     }
-
     private void createHologram(String npcName, Location baseLocation, double height, double offsetX, double offsetZ, List<String> lines) {
         Location hologramLocation = baseLocation.clone().add(offsetX, height, offsetZ);
         List<ArmorStand> stands = new ArrayList<>();
-
         for (int i = 0; i < lines.size(); i++) {
             String line = lines.get(i);
             Location lineLocation = hologramLocation.clone().subtract(0, i * 0.25, 0);
-
             ArmorStand stand = (ArmorStand) baseLocation.getWorld().spawnEntity(lineLocation, EntityType.ARMOR_STAND);
             stand.setCustomNameVisible(true);
             DuelMode defaultMode = DuelMode.BEDFIGHT;
@@ -79,13 +69,10 @@ public class HologramManager {
             stand.setMarker(true);
             stand.setCanPickupItems(false);
             stand.setRemoveWhenFarAway(false);
-
             stands.add(stand);
         }
-
         holograms.put(npcName, stands);
     }
-
     public void updateHolograms() {
         for (Map.Entry<String, List<ArmorStand>> entry : holograms.entrySet()) {
             String npcName = entry.getKey();
@@ -102,15 +89,11 @@ public class HologramManager {
             }
         }
     }
-
     private String processPlaceholders(String line, DuelMode mode) {
         String processed = ChatColor.translateAlternateColorCodes('&', line);
-        
-        // Processar placeholder <theme> - usar tema padrão já que não há jogador específico
         try {
             dev.artix.artixduels.managers.ThemeManager themeManager = plugin.getThemeManager();
             if (themeManager != null) {
-                // Usar tema padrão (dark) para hologramas globais
                 String themeColor = themeManager.getTheme("dark").getColor("primary");
                 processed = processed.replace("<theme>", themeColor);
             } else {
@@ -119,24 +102,19 @@ public class HologramManager {
         } catch (Exception e) {
             processed = processed.replace("<theme>", "&b");
         }
-        
         if (placeholderManager != null) {
             processed = placeholderManager.processPlaceholders(processed, null, mode);
         } else {
-            // Fallback para compatibilidade
             int playersInDuel = duelManager.getActiveDuelsCountByMode(mode) * 2;
             int playersInQueue = duelManager.getMatchmakingQueueSizeByMode(mode);
-            
             processed = processed.replace("{players-in-duel}", String.valueOf(playersInDuel));
             processed = processed.replace("{players-in-queue}", String.valueOf(playersInQueue));
             processed = processed.replace("{total-players}", String.valueOf(playersInDuel + playersInQueue));
             processed = processed.replace("{active-duels}", String.valueOf(duelManager.getActiveDuelsCountByMode(mode)));
             processed = processed.replace("{online-players}", String.valueOf(plugin.getServer().getOnlinePlayers().size()));
         }
-        
         return processed;
     }
-
     private List<String> getDefaultLines() {
         List<String> defaultLines = new ArrayList<>();
         defaultLines.add("&6&lDUELOS");
@@ -147,7 +125,6 @@ public class HologramManager {
         defaultLines.add("&eClique aqui!");
         return defaultLines;
     }
-
     public void removeHologram(String npcName) {
         List<ArmorStand> stands = holograms.remove(npcName);
         if (stands != null) {
@@ -158,7 +135,6 @@ public class HologramManager {
         hologramLines.remove(npcName);
         hologramModes.remove(npcName);
     }
-
     public void removeAllHolograms() {
         for (List<ArmorStand> stands : holograms.values()) {
             for (ArmorStand stand : stands) {
@@ -169,7 +145,6 @@ public class HologramManager {
         hologramLines.clear();
         hologramModes.clear();
     }
-
     public void startUpdateTask() {
         if (updateTaskId != 0) {
             plugin.getServer().getScheduler().cancelTask(updateTaskId);
@@ -178,7 +153,6 @@ public class HologramManager {
             updateHolograms();
         }, 0L, 20L);
     }
-
     public void stopUpdateTask() {
         if (updateTaskId != 0) {
             plugin.getServer().getScheduler().cancelTask(updateTaskId);

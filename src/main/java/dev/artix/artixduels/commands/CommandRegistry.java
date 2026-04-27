@@ -181,6 +181,16 @@ public class CommandRegistry {
                 Arrays.asList("stats", "estatisticas", "estat"), null,
                 new DashboardCommand(plugin.getStatsDashboardGUI()), null);
 
+            // Passe de batalha
+            registerCommand("battlepass", "Ver progresso e resgatar recompensas do passe",
+                Arrays.asList("bp", "passe", "battlepass"), "artixduels.battlepass",
+                new BattlePassCommand(plugin), null);
+
+            // Loot boxes
+            registerCommand("lootbox", "Listar e abrir loot boxes",
+                Arrays.asList("lootboxes", "caixa", "caixas"), "artixduels.lootbox",
+                new LootBoxCommand(plugin), null);
+
             // Configurações de Notificação
             registerCommand("notifications", "Configurar notificações",
                 Arrays.asList("notif", "notificacoes", "alertas"), null,
@@ -193,19 +203,14 @@ public class CommandRegistry {
                 Arrays.asList("lang", "idioma", "idiomas"), null,
                 new LanguageCommand(plugin.getLanguageManager(), languageGUI), null);
 
-            // Editor de Arenas
-            dev.artix.artixduels.gui.ArenaEditorGUI arenaEditorGUI = 
-                new dev.artix.artixduels.gui.ArenaEditorGUI(plugin.getArenaEditor(), plugin.getArenaManager());
+            // Editor de Arenas / Kits (GUI instanciada e registrada em ArtixDuels#onEnable)
             registerCommand("arenaeditor", "Editor visual de arenas",
                 Arrays.asList("arenaedit", "editarena", "editor"), "artixduels.admin",
-                new ArenaEditorCommand(plugin.getArenaEditor(), arenaEditorGUI), null);
+                new ArenaEditorCommand(plugin.getArenaEditor(), plugin.getArenaEditorGUI()), null);
 
-            // Editor de Kits
-            dev.artix.artixduels.gui.KitEditorGUI kitEditorGUI = 
-                new dev.artix.artixduels.gui.KitEditorGUI(plugin.getKitEditor(), plugin.getKitManager());
             registerCommand("kiteditor", "Editor visual de kits",
                 Arrays.asList("kitedit", "editkit"), "artixduels.admin",
-                new KitEditorCommand(plugin.getKitEditor(), kitEditorGUI), null);
+                new KitEditorCommand(plugin.getKitEditor(), plugin.getKitEditorGUI()), null);
 
             // Temas
             dev.artix.artixduels.gui.ThemeSelectionGUI themeGUI = 

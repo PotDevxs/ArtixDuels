@@ -12,6 +12,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
@@ -98,14 +99,23 @@ public class DuelModeSelectionGUI implements Listener {
         challenger.openInventory(gui);
     }
 
-    @EventHandler
+    private static boolean titleMatchesDuelModeMenu(String viewTitle) {
+        String t = ChatColor.stripColor(viewTitle);
+        return t.contains("Modo de Duelo");
+    }
+
+    private static boolean titleMatchesQueueMenu(String viewTitle) {
+        String t = ChatColor.stripColor(viewTitle).toLowerCase();
+        // menus.yml: "&b&lQUEUE" — "QUEUE".contains("Queue") em Java é falso; usar caixa baixa
+        return t.contains("procurar partida") || t.contains("queue");
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
     public void onInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         
         Player player = (Player) event.getWhoClicked();
-        String title = event.getView().getTitle();
-        
-        if (!title.contains("Modo de Duelo")) {
+        if (!titleMatchesDuelModeMenu(event.getView().getTitle())) {
             return;
         }
         
@@ -162,9 +172,7 @@ public class DuelModeSelectionGUI implements Listener {
     public void onInventoryClose(InventoryCloseEvent event) {
         if (event.getPlayer() instanceof Player) {
             Player player = (Player) event.getPlayer();
-            String title = event.getView().getTitle();
-            
-            if (title.contains("Modo de Duelo")) {
+            if (titleMatchesDuelModeMenu(event.getView().getTitle())) {
                 pendingChallenges.remove(player.getUniqueId());
             }
         }
@@ -330,14 +338,12 @@ public class DuelModeSelectionGUI implements Listener {
         return createMenuItem(material, displayName, lore.toArray(new String[0]));
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
     public void onQueueInventoryClick(InventoryClickEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
         
         Player player = (Player) event.getWhoClicked();
-        String title = event.getView().getTitle();
-        
-        if (!title.contains("Procurar Partida") && !title.contains("Queue")) {
+        if (!titleMatchesQueueMenu(event.getView().getTitle())) {
             return;
         }
         
@@ -367,12 +373,11 @@ public class DuelModeSelectionGUI implements Listener {
         duelManager.addToMatchmaking(player, selectedMode);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = false)
     public void onMenuInventoryDrag(InventoryDragEvent event) {
         if (!(event.getWhoClicked() instanceof Player)) return;
-        String title = event.getView().getTitle();
-        if (title.contains("Procurar Partida") || title.contains("Queue")
-                || title.contains("Modo de Duelo")) {
+        String t = event.getView().getTitle();
+        if (titleMatchesQueueMenu(t) || titleMatchesDuelModeMenu(t)) {
             event.setCancelled(true);
         }
     }
